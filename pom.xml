@@ -1,0 +1,66 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>de.aquadiva</groupId>
+		<artifactId>ad-ontology-selection</artifactId>
+		<version>0.0.2-SNAPSHOT</version>
+		<relativePath>../ad-ontology-selection</relativePath>
+	</parent>
+	<artifactId>ad-ontology-selection-processes</artifactId>
+	<name>AquaDiva Ontology Selection Processes</name>
+	<description>This project is meant to tie together other AquaDiva Ontology Selection (ADOS) modules together to perform the actual selection process and possibly other processes required to fulfill tasks.</description>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.2</version>
+				<configuration>
+					<descriptors>
+						<descriptor>ados-assembly.xml</descriptor>
+					</descriptors>
+					<archive>
+						<manifest>
+							<mainClass>de.aquadiva.ontologyselection.application.ADOSApplication</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal> 
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>de.aquadiva</groupId>
+			<artifactId>ad-ontology-selection-core</artifactId>
+			<version>${app-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>de.aquadiva</groupId>
+			<artifactId>ad-ontology-selection-reasoning</artifactId>
+			<version>${app-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.2.145</version>
+		</dependency>
+		<dependency>
+			<groupId>de.ifis</groupId>
+			<artifactId>SkySim_Maven</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>9.2-1002-jdbc4</version>
+		</dependency>
+	</dependencies>
+</project>
