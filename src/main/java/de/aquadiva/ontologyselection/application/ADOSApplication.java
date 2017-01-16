@@ -10,7 +10,7 @@ import org.apache.tapestry5.ioc.RegistryBuilder;
 
 import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
 import de.aquadiva.ontologyselection.processes.services.ISetupService;
-import de.aquadiva.ontologyselection.processes.services.OSProcessesModule;
+import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
 
 /**
  * A CLI application for setup and local use. Should go into an interface
@@ -25,7 +25,7 @@ public class ADOSApplication {
 		Registry registry = null;
 		try {
 			registry = RegistryBuilder
-					.buildAndStartupRegistry(OSProcessesModule.class);
+					.buildAndStartupRegistry(JoyceProcessesModule.class);
 			ISetupService setupService = registry
 					.getService(ISetupService.class);
 			setupService.setupSelectionSystem();

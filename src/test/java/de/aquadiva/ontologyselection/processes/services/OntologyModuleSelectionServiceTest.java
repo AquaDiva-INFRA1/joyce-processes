@@ -12,7 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
-import de.aquadiva.ontologyselection.OSSymbolConstants;
+import de.aquadiva.ontologyselection.JoyceSymbolConstants;
 import de.aquadiva.ontologyselection.base.data.IOntology;
 import de.aquadiva.ontologyselection.base.data.OntologySet;
 import de.aquadiva.ontologyselection.core.services.ConceptTaggingService;
@@ -22,7 +22,7 @@ public class OntologyModuleSelectionServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
-		System.setProperty(OSSymbolConstants.PERSISTENCE_CONTEXT, "de.aquadiva.test.jpa.ontologyselection");
+		System.setProperty(JoyceSymbolConstants.PERSISTENCE_CONTEXT, "de.aquadiva.test.jpa.ontologyselection");
 		// Set the test configuration for the gazetteer so we may work with a
 		// small test dictionary
 		System.setProperty(ConceptTaggingService.GAZETTEER_CONFIG, "bioportal.gazetteer.test.processes.properties");
@@ -150,7 +150,7 @@ public class OntologyModuleSelectionServiceTest {
 	@Test
 	public void testSelectForText() throws Exception {
 
-		Registry registry = RegistryBuilder.buildAndStartupRegistry(OSProcessesModule.class);
+		Registry registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 
 		IOntologyModuleSelectionService selectionService = registry.getService(IOntologyModuleSelectionService.class);
 		// String inputTerms = "Backpain, White blood cell, Carcinoma, Cavity of

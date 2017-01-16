@@ -32,7 +32,7 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 
-import de.aquadiva.ontologyselection.OSSymbolConstants;
+import de.aquadiva.ontologyselection.JoyceSymbolConstants;
 import de.aquadiva.ontologyselection.base.data.IOntology;
 import de.aquadiva.ontologyselection.base.data.IOntologySet;
 import de.aquadiva.ontologyselection.base.data.Ontology;

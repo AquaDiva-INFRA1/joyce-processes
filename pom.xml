@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>de.aquadiva</groupId>
-		<artifactId>ad-ontology-selection</artifactId>
-		<version>0.0.2-SNAPSHOT</version>
-		<relativePath>../ad-ontology-selection</relativePath>
+		<artifactId>joyce</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
 	</parent>
-	<artifactId>ad-ontology-selection-processes</artifactId>
+	<artifactId>joyce-processes</artifactId>
 	<name>AquaDiva Ontology Selection Processes</name>
 	<description>This project is meant to tie together other AquaDiva Ontology Selection (ADOS) modules together to perform the actual selection process and possibly other processes required to fulfill tasks.</description>
 	<build>
@@ -39,13 +39,13 @@
 	<dependencies>
 		<dependency>
 			<groupId>de.aquadiva</groupId>
-			<artifactId>ad-ontology-selection-core</artifactId>
-			<version>${app-version}</version>
+			<artifactId>joyce-core</artifactId>
+			<version>${project.parent.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.aquadiva</groupId>
-			<artifactId>ad-ontology-selection-reasoning</artifactId>
-			<version>${app-version}</version>
+			<artifactId>joyce-reasoning</artifactId>
+			<version>${project.parent.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>

@@ -16,7 +16,7 @@ import com.google.common.collect.Multiset;
 
 import de.aquadiva.ontologyselection.core.services.ConceptTaggingService;
 import de.aquadiva.ontologyselection.core.services.IConceptTaggingService;
-import de.aquadiva.ontologyselection.processes.services.OSProcessesModule;
+import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
 
 public class AquaDivaTextTermExtraction {
 	public static void main(String[] args) throws Exception, IOException {
@@ -35,7 +35,7 @@ public class AquaDivaTextTermExtraction {
 			}
 		});
 		Registry r = RegistryBuilder
-				.buildAndStartupRegistry(OSProcessesModule.class);
+				.buildAndStartupRegistry(JoyceProcessesModule.class);
 		IConceptTaggingService tagger = r
 				.getService(IConceptTaggingService.class);
 		File outputfile = new File("aquadivaterms-output.txt");

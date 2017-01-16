@@ -16,18 +16,18 @@ import de.aquadiva.ontologyselection.core.services.ClassCoverageScorer.ClassCove
 import de.aquadiva.ontologyselection.core.services.ClassOverheadScorer.ClassOverhead;
 import de.aquadiva.ontologyselection.core.services.ClassOverlapScorer.ClassOverlap;
 import de.aquadiva.ontologyselection.core.services.DescriptivityScorer.Descriptivity;
-import de.aquadiva.ontologyselection.core.services.OSCoreModule;
+import de.aquadiva.ontologyselection.core.services.JoyceCoreModule;
 import de.aquadiva.ontologyselection.core.services.PopularityScorer.Popularity;
 import de.aquadiva.ontologyselection.core.services.RichnessScorer.Richness;
 import de.aquadiva.ontologyselection.core.services.UpToDateScorer.UpToDate;
-import de.aquadiva.ontologyselection.reasoning.services.OSReasoningModule;
+import de.aquadiva.ontologyselection.reasoning.services.JoyceReasoningModule;
 import de.aquadiva.ontologyselection.reasoning.services.ReasoningChain;
 
-@SubModule(value = { OSCoreModule.class, OSReasoningModule.class })
-public class OSProcessesModule {
+@SubModule(value = { JoyceCoreModule.class, JoyceReasoningModule.class })
+public class JoyceProcessesModule {
 	private ChainBuilder chainBuilder;
 
-	public OSProcessesModule(ChainBuilder chainBuilder) {
+	public JoyceProcessesModule(ChainBuilder chainBuilder) {
 		this.chainBuilder = chainBuilder;
 	}
 	

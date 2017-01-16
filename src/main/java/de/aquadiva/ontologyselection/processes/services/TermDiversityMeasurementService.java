@@ -20,7 +20,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
-import de.aquadiva.ontologyselection.OSSymbolConstants;
+import de.aquadiva.ontologyselection.JoyceSymbolConstants;
 import de.aquadiva.ontologyselection.core.services.IConceptTaggingService;
 
 public class TermDiversityMeasurementService implements
@@ -31,7 +31,7 @@ public class TermDiversityMeasurementService implements
 
 	public TermDiversityMeasurementService(
 			Logger log,
-			@Symbol(OSSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING) File classOntologyMappingFile)
+			@Symbol(JoyceSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING) File classOntologyMappingFile)
 			throws IOException {
 		this.log = log;
 		classToModuleMapping = readClassToModuleMapping(classOntologyMappingFile);

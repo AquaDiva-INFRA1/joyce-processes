@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import de.aquadiva.ontologyselection.OSSymbolConstants;
+import de.aquadiva.ontologyselection.JoyceSymbolConstants;
 import de.aquadiva.ontologyselection.base.data.Ontology;
 import de.aquadiva.ontologyselection.base.data.OntologyModule;
 import de.aquadiva.ontologyselection.base.services.IConstantOntologyScorer;
@@ -41,16 +41,16 @@ import de.aquadiva.ontologyselection.core.services.IOntologyModularizationServic
  * Input:
  * <ul>
  * <li>A configuration file 'configuration.properties' with keys from
- * {@link OSSymbolConstants}.</li>
+ * {@link JoyceSymbolConstants}.</li>
  * <li>A term-to-classIRI/metaClassId dictionary mapping all names and synonyms
  * of classes to the respective class IRIs or meta class ID. The location of
  * this dictionary must be configured in the configuration file with key
- * {@link OSSymbolConstants#DICT_FULL_PATH}.</li>
+ * {@link JoyceSymbolConstants#DICT_FULL_PATH}.</li>
  * <li>A meta-concept-mapping-file that maps artificial meta-concept ID to lists
  * of class IRIs that represent equivalent classes. This mapping can have any
  * source, typically the BioPortal mappings are used. The file location is
  * configured with property
- * {@link OSSymbolConstants#META_CLASS_TO_IRI_CLASS_MAPPING}</li>
+ * {@link JoyceSymbolConstants#META_CLASS_TO_IRI_CLASS_MAPPING}</li>
  * </ul>
  * Please note that the mapping files/dictionaries are currently created by an
  * external process/database. This project does not contain classes to create
@@ -63,10 +63,10 @@ import de.aquadiva.ontologyselection.core.services.IOntologyModularizationServic
  * ontologies and their cluster-based modules.</li>
  * <li>A file that maps ontology class IRIs/meta class IDs to the module and
  * ontology IDs, written to the file defined with
- * {@link OSSymbolConstants#MIXEDCLASS_ONTOLOGY_MAPPING}.
+ * {@link JoyceSymbolConstants#MIXEDCLASS_ONTOLOGY_MAPPING}.
  * <li>A dictionary mapping class names and synonyms to class IRIs or meta-class
  * IDs for the automatic detection of classes in user input. Written to a file
- * given by {@link OSSymbolConstants#DICT_FILTERED_PATH}</li>
+ * given by {@link JoyceSymbolConstants#DICT_FILTERED_PATH}</li>
  * </ul>
  * </p>
  * 
@@ -75,10 +75,10 @@ import de.aquadiva.ontologyselection.core.services.IOntologyModularizationServic
  * <ol>
  * <li>Downloads original ontology files (mainly in OWL and OBO format) from
  * BioPortal IF the configuration property
- * {@link OSSymbolConstants#SETUP_DOWNLOAD_BIOPORTAL} is set to <tt>true</tt>..
+ * {@link JoyceSymbolConstants#SETUP_DOWNLOAD_BIOPORTAL} is set to <tt>true</tt>..
  * </li>
  * <li>Converts OBO ontologies to OWL format IF the configuration property
- * {@link OSSymbolConstants#SETUP_CONVERT_TO_OWL} is set to <tt>true</tt>.</li>
+ * {@link JoyceSymbolConstants#SETUP_CONVERT_TO_OWL} is set to <tt>true</tt>.</li>
  * <li>Imports all ontologies in OWL format (also converted ones) into the
  * database.</li>
  * <li>Performs a static cluster-based ontology partitioning on each ontology,
@@ -89,11 +89,11 @@ import de.aquadiva.ontologyselection.core.services.IOntologyModularizationServic
  * to retrieve its source ontology, thus it is always possible filter full
  * ontologies or modules, respectively. The mapping is stored to the file given
  * with configuration property
- * {@link OSSymbolConstants#MIXEDCLASS_ONTOLOGY_MAPPING}</li>
+ * {@link JoyceSymbolConstants#MIXEDCLASS_ONTOLOGY_MAPPING}</li>
  * <li>Filters the pre-created ontology class term dictionary at path given with
- * {@link OSSymbolConstants#DICT_FULL_PATH} to a smaller dictionary, only
+ * {@link JoyceSymbolConstants#DICT_FULL_PATH} to a smaller dictionary, only
  * including classes actually seen during the setup process, and stores it to
- * the path given through {@link OSSymbolConstants#DICT_FILTERED_PATH}.</li>
+ * the path given through {@link JoyceSymbolConstants#DICT_FILTERED_PATH}.</li>
  * </ol>
  * </p>
  * 
@@ -123,13 +123,13 @@ public class SetupService implements ISetupService {
 			IOntologyFormatConversionService formatConversionService, IOntologyDBService dbService,
 			IOntologyModularizationService modularizationService, IOWLParsingService owlParsingService,
 			IMetaConceptService metaConceptService, @ConstantScoringChain IConstantOntologyScorer constantScoringChain,
-			@Symbol(OSSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL) boolean doDownload,
-			@Symbol(OSSymbolConstants.SETUP_CONVERT_TO_OWL) boolean doConvert,
-			@Symbol(OSSymbolConstants.SETUP_ERROR_FILE) File errorFile,
-			@Symbol(OSSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING) String classOntologyMappingFile,
-			@Symbol(OSSymbolConstants.ONTOLOGIES_FOR_DOWNLOAD) String requestedAcronyms,
-			@Symbol(OSSymbolConstants.DICT_FULL_PATH) String dictFullPath,
-			@Symbol(OSSymbolConstants.DICT_FILTERED_PATH) String dictFilteredPath, IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService) {
+			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL) boolean doDownload,
+			@Symbol(JoyceSymbolConstants.SETUP_CONVERT_TO_OWL) boolean doConvert,
+			@Symbol(JoyceSymbolConstants.SETUP_ERROR_FILE) File errorFile,
+			@Symbol(JoyceSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING) String classOntologyMappingFile,
+			@Symbol(JoyceSymbolConstants.ONTOLOGIES_FOR_DOWNLOAD) String requestedAcronyms,
+			@Symbol(JoyceSymbolConstants.DICT_FULL_PATH) String dictFullPath,
+			@Symbol(JoyceSymbolConstants.DICT_FILTERED_PATH) String dictFilteredPath, IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService) {
 		this.log = log;
 		this.downloadService = downloadService;
 		this.formatConversionService = formatConversionService;

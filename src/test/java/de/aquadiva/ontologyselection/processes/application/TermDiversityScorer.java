@@ -23,7 +23,7 @@ import org.junit.Test;
 
 import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
 import de.aquadiva.ontologyselection.processes.services.ITermDiversityMeasurementService;
-import de.aquadiva.ontologyselection.processes.services.OSProcessesModule;
+import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
 
 public class TermDiversityScorer {
 	@Test
@@ -72,7 +72,7 @@ public class TermDiversityScorer {
 		Registry registry = null;
 		try {
 			registry = RegistryBuilder
-					.buildAndStartupRegistry(OSProcessesModule.class);
+					.buildAndStartupRegistry(JoyceProcessesModule.class);
 			ITermDiversityMeasurementService service = registry
 					.getService(ITermDiversityMeasurementService.class);
 			System.out.println("Total diversity: "	+ service.getDiversity(terms));

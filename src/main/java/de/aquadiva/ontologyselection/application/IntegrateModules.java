@@ -35,13 +35,13 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import de.aquadiva.ontologyselection.OSSymbolConstants;
+import de.aquadiva.ontologyselection.JoyceSymbolConstants;
 import de.aquadiva.ontologyselection.base.data.IOntology;
 import de.aquadiva.ontologyselection.base.data.Ontology;
 import de.aquadiva.ontologyselection.base.data.OntologyModule;
 import de.aquadiva.ontologyselection.base.services.IOWLParsingService;
 import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
-import de.aquadiva.ontologyselection.processes.services.OSProcessesModule;
+import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
 
 public class IntegrateModules {
 
@@ -70,18 +70,18 @@ public class IntegrateModules {
 			IOWLParsingService parsingService;
 
 			registry = RegistryBuilder
-					.buildAndStartupRegistry(OSProcessesModule.class);
+					.buildAndStartupRegistry(JoyceProcessesModule.class);
 			parsingService = registry.getService(IOWLParsingService.class);
 			SymbolSource symbolSource = registry.getService(SymbolSource.class);
-			dictFilteredPath = symbolSource.valueForSymbol(OSSymbolConstants.DICT_FILTERED_PATH);
-			dictFullPath = symbolSource.valueForSymbol(OSSymbolConstants.DICT_FULL_PATH);
+			dictFilteredPath = symbolSource.valueForSymbol(JoyceSymbolConstants.DICT_FILTERED_PATH);
+			dictFullPath = symbolSource.valueForSymbol(JoyceSymbolConstants.DICT_FULL_PATH);
 			log.debug("Reading the mapping that maps class IRIs to meta class IDs so we can set meta classes to ontologies and modules");
 			Map<String, String> metaConceptMapping = readMetaConceptMapping(new File(
 					symbolSource
-							.valueForSymbol(OSSymbolConstants.META_CLASS_TO_IRI_CLASS_MAPPING)));
+							.valueForSymbol(JoyceSymbolConstants.META_CLASS_TO_IRI_CLASS_MAPPING)));
 			classOntologyMappingFile = new File(
 					symbolSource
-							.valueForSymbol(OSSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING));
+							.valueForSymbol(JoyceSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING));
 
 			log.info("Getting all ontologies from database in order to match their IDs to the module file names.");
 			IOntologyDBService dbService = registry
