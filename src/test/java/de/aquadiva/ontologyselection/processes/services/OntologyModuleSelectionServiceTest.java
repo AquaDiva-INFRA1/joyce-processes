@@ -15,7 +15,6 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import de.aquadiva.ontologyselection.JoyceSymbolConstants;
 import de.aquadiva.ontologyselection.base.data.IOntology;
 import de.aquadiva.ontologyselection.base.data.OntologySet;
-import de.aquadiva.ontologyselection.core.services.ConceptTaggingService;
 
 public class OntologyModuleSelectionServiceTest {
 	String resultString;
@@ -25,7 +24,7 @@ public class OntologyModuleSelectionServiceTest {
 		System.setProperty(JoyceSymbolConstants.PERSISTENCE_CONTEXT, "de.aquadiva.test.jpa.ontologyselection");
 		// Set the test configuration for the gazetteer so we may work with a
 		// small test dictionary
-		System.setProperty(ConceptTaggingService.GAZETTEER_CONFIG, "bioportal.gazetteer.test.processes.properties");
+		System.setProperty(JoyceSymbolConstants.GAZETTEER_CONFIG, "bioportal.gazetteer.test.processes.properties");
 		resultString = "";
 		resultString += "null";
 		resultString += "[0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 ][12.0 12.0 12.0 12.0 12.0 12.0 12.0 12.0 12.0 12.0 ][24.0 24.0 24.0 24.0 24.0 24.0 24.0 24.0 24.0 24.0 ][36.0 36.0 36.0 36.0 36.0 36.0 36.0 36.0 36.0 36.0 ][48.0 48.0 48.0 48.0 48.0 48.0 48.0 48.0 48.0 48.0 ]";

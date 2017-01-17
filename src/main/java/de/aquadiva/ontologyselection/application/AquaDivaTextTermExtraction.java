@@ -14,7 +14,7 @@ import org.apache.tapestry5.ioc.RegistryBuilder;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 
-import de.aquadiva.ontologyselection.core.services.ConceptTaggingService;
+import de.aquadiva.ontologyselection.JoyceSymbolConstants;
 import de.aquadiva.ontologyselection.core.services.IConceptTaggingService;
 import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
 
@@ -25,7 +25,7 @@ public class AquaDivaTextTermExtraction {
 			System.exit(1);
 		}
 		
-		System.setProperty(ConceptTaggingService.GAZETTEER_CONFIG, "bioportal.gazetteer.aquadivatext.properties");
+		System.setProperty(JoyceSymbolConstants.GAZETTEER_CONFIG, "bioportal.gazetteer.aquadivatext.properties");
 		File adTextDir = new File(args[0]);
 		File[] adTextFiles = adTextDir.listFiles(new FilenameFilter() {
 
