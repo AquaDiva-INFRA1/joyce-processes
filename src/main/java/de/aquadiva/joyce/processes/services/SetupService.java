@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,17 +23,17 @@ import org.slf4j.Logger;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import de.aquadiva.ontologyselection.JoyceSymbolConstants;
-import de.aquadiva.ontologyselection.base.data.Ontology;
-import de.aquadiva.ontologyselection.base.data.OntologyModule;
-import de.aquadiva.ontologyselection.base.services.IConstantOntologyScorer;
-import de.aquadiva.ontologyselection.base.services.IMetaConceptService;
-import de.aquadiva.ontologyselection.base.services.IOWLParsingService;
-import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
-import de.aquadiva.ontologyselection.base.services.IOntologyDownloadService;
-import de.aquadiva.ontologyselection.base.services.IOntologyFormatConversionService;
-import de.aquadiva.ontologyselection.base.services.IOntologyRepositoryStatsPrinterService;
-import de.aquadiva.ontologyselection.core.services.IOntologyModularizationService;
+import de.aquadiva.joyce.JoyceSymbolConstants;
+import de.aquadiva.joyce.base.data.Ontology;
+import de.aquadiva.joyce.base.data.OntologyModule;
+import de.aquadiva.joyce.base.services.IConstantOntologyScorer;
+import de.aquadiva.joyce.base.services.IMetaConceptService;
+import de.aquadiva.joyce.base.services.IOWLParsingService;
+import de.aquadiva.joyce.base.services.IOntologyDBService;
+import de.aquadiva.joyce.base.services.IOntologyDownloadService;
+import de.aquadiva.joyce.base.services.IOntologyFormatConversionService;
+import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
+import de.aquadiva.joyce.core.services.IOntologyModularizationService;
 
 /**
  * Sets up the environment for ontology module selection.<br/>

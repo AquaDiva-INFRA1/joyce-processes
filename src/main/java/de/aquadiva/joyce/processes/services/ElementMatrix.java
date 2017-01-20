@@ -1,9 +1,9 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import java.util.ArrayList;
 
-import de.aquadiva.ontologyselection.base.data.OntologySet;
-import de.aquadiva.ontologyselection.base.data.ScoreType;
+import de.aquadiva.joyce.base.data.OntologySet;
+import de.aquadiva.joyce.base.data.ScoreType;
 
 /**
  * A class maintaining the ontology sets for each subspace. 

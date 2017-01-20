@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

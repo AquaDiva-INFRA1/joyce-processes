@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import java.util.List;
 
@@ -9,17 +9,17 @@ import org.apache.tapestry5.ioc.annotations.Marker;
 import org.apache.tapestry5.ioc.annotations.SubModule;
 import org.apache.tapestry5.ioc.services.ChainBuilder;
 
-import de.aquadiva.ontologyselection.base.services.IConstantOntologyScorer;
-import de.aquadiva.ontologyselection.base.services.IVariableOntologyScorer;
-import de.aquadiva.ontologyselection.core.services.ActiveCommunityScorer.ActiveCommunity;
-import de.aquadiva.ontologyselection.core.services.ClassCoverageScorer.ClassCoverage;
-import de.aquadiva.ontologyselection.core.services.ClassOverheadScorer.ClassOverhead;
-import de.aquadiva.ontologyselection.core.services.ClassOverlapScorer.ClassOverlap;
-import de.aquadiva.ontologyselection.core.services.DescriptivityScorer.Descriptivity;
-import de.aquadiva.ontologyselection.core.services.JoyceCoreModule;
-import de.aquadiva.ontologyselection.core.services.PopularityScorer.Popularity;
-import de.aquadiva.ontologyselection.core.services.RichnessScorer.Richness;
-import de.aquadiva.ontologyselection.core.services.UpToDateScorer.UpToDate;
+import de.aquadiva.joyce.base.services.IConstantOntologyScorer;
+import de.aquadiva.joyce.base.services.IVariableOntologyScorer;
+import de.aquadiva.joyce.core.services.JoyceCoreModule;
+import de.aquadiva.joyce.core.services.ActiveCommunityScorer.ActiveCommunity;
+import de.aquadiva.joyce.core.services.ClassCoverageScorer.ClassCoverage;
+import de.aquadiva.joyce.core.services.ClassOverheadScorer.ClassOverhead;
+import de.aquadiva.joyce.core.services.ClassOverlapScorer.ClassOverlap;
+import de.aquadiva.joyce.core.services.DescriptivityScorer.Descriptivity;
+import de.aquadiva.joyce.core.services.PopularityScorer.Popularity;
+import de.aquadiva.joyce.core.services.RichnessScorer.Richness;
+import de.aquadiva.joyce.core.services.UpToDateScorer.UpToDate;
 import de.aquadiva.ontologyselection.reasoning.services.JoyceReasoningModule;
 import de.aquadiva.ontologyselection.reasoning.services.ReasoningChain;
 

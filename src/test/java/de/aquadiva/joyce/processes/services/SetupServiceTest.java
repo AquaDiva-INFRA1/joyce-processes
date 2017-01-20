@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import static org.junit.Assert.*;
 
@@ -15,9 +15,11 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.aquadiva.ontologyselection.JoyceSymbolConstants;
-import de.aquadiva.ontologyselection.base.data.Ontology;
-import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
+import de.aquadiva.joyce.JoyceSymbolConstants;
+import de.aquadiva.joyce.base.data.Ontology;
+import de.aquadiva.joyce.base.services.IOntologyDBService;
+import de.aquadiva.joyce.processes.services.ISetupService;
+import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
 
 public class SetupServiceTest {
 	private static Registry registry;

@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.application;
+package de.aquadiva.joyce.processes.application;
 
 import java.io.FileInputStream;
 import java.io.IOException;

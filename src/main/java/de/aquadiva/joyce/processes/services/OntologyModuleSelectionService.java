@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,22 +32,22 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 
-import de.aquadiva.ontologyselection.JoyceSymbolConstants;
-import de.aquadiva.ontologyselection.base.data.IOntology;
-import de.aquadiva.ontologyselection.base.data.IOntologySet;
-import de.aquadiva.ontologyselection.base.data.Ontology;
-import de.aquadiva.ontologyselection.base.data.OntologyModule;
-import de.aquadiva.ontologyselection.base.data.OntologySet;
-import de.aquadiva.ontologyselection.base.data.ScoreType;
-import de.aquadiva.ontologyselection.base.services.IConstantOntologyScorer;
-import de.aquadiva.ontologyselection.base.services.IMetaConceptService;
-import de.aquadiva.ontologyselection.base.services.IOWLParsingService;
-import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
-import de.aquadiva.ontologyselection.base.services.IVariableOntologyScorer;
-import de.aquadiva.ontologyselection.core.services.ClassCoverageScorer.ClassCoverage;
-import de.aquadiva.ontologyselection.core.services.ClassOverheadScorer.ClassOverhead;
-import de.aquadiva.ontologyselection.core.services.ClassOverlapScorer.ClassOverlap;
-import de.aquadiva.ontologyselection.core.services.IConceptTaggingService;
+import de.aquadiva.joyce.JoyceSymbolConstants;
+import de.aquadiva.joyce.base.data.IOntology;
+import de.aquadiva.joyce.base.data.IOntologySet;
+import de.aquadiva.joyce.base.data.Ontology;
+import de.aquadiva.joyce.base.data.OntologyModule;
+import de.aquadiva.joyce.base.data.OntologySet;
+import de.aquadiva.joyce.base.data.ScoreType;
+import de.aquadiva.joyce.base.services.IConstantOntologyScorer;
+import de.aquadiva.joyce.base.services.IMetaConceptService;
+import de.aquadiva.joyce.base.services.IOWLParsingService;
+import de.aquadiva.joyce.base.services.IOntologyDBService;
+import de.aquadiva.joyce.base.services.IVariableOntologyScorer;
+import de.aquadiva.joyce.core.services.IConceptTaggingService;
+import de.aquadiva.joyce.core.services.ClassCoverageScorer.ClassCoverage;
+import de.aquadiva.joyce.core.services.ClassOverheadScorer.ClassOverhead;
+import de.aquadiva.joyce.core.services.ClassOverlapScorer.ClassOverlap;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 import uk.ac.manchester.cs.owlapi.modularity.SyntacticLocalityModuleExtractor;
 

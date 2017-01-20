@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.application;
+package de.aquadiva.joyce.application;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,9 +14,9 @@ import org.apache.tapestry5.ioc.RegistryBuilder;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 
-import de.aquadiva.ontologyselection.JoyceSymbolConstants;
-import de.aquadiva.ontologyselection.core.services.IConceptTaggingService;
-import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
+import de.aquadiva.joyce.JoyceSymbolConstants;
+import de.aquadiva.joyce.core.services.IConceptTaggingService;
+import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
 
 public class AquaDivaTextTermExtraction {
 	public static void main(String[] args) throws Exception, IOException {

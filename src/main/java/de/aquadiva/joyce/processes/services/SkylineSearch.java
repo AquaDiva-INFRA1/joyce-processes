@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import ifis.skysim2.algorithms.SkylineAlgorithm;
 import ifis.skysim2.algorithms.SkylineAlgorithmBBS;
@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import de.aquadiva.ontologyselection.base.data.IOntologySet;
-import de.aquadiva.ontologyselection.base.data.OntologySet;
-import de.aquadiva.ontologyselection.base.data.ScoreType;
+import de.aquadiva.joyce.base.data.IOntologySet;
+import de.aquadiva.joyce.base.data.OntologySet;
+import de.aquadiva.joyce.base.data.ScoreType;
 
 /**
  * Class providing access to the skyline algorithms implemented by Christoph Lofi (lofi@ifis.cs.tu-bs.de).

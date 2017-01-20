@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.application;
+package de.aquadiva.joyce.application;
 
 import java.io.IOException;
 import java.util.List;
@@ -8,9 +8,9 @@ import java.util.concurrent.TimeUnit;
 import org.apache.tapestry5.ioc.Registry;
 import org.apache.tapestry5.ioc.RegistryBuilder;
 
-import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
-import de.aquadiva.ontologyselection.processes.services.ISetupService;
-import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
+import de.aquadiva.joyce.base.services.IOntologyDBService;
+import de.aquadiva.joyce.processes.services.ISetupService;
+import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
 
 /**
  * A CLI application for setup and local use. Should go into an interface

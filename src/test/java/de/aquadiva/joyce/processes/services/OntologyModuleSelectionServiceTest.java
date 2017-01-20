@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -12,9 +12,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
-import de.aquadiva.ontologyselection.JoyceSymbolConstants;
-import de.aquadiva.ontologyselection.base.data.IOntology;
-import de.aquadiva.ontologyselection.base.data.OntologySet;
+import de.aquadiva.joyce.JoyceSymbolConstants;
+import de.aquadiva.joyce.base.data.IOntology;
+import de.aquadiva.joyce.base.data.OntologySet;
+import de.aquadiva.joyce.processes.services.IOntologyModuleSelectionService;
+import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
+import de.aquadiva.joyce.processes.services.OntologyModuleSelectionService;
 
 public class OntologyModuleSelectionServiceTest {
 	String resultString;

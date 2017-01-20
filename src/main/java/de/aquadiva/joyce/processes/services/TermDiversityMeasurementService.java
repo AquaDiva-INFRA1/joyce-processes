@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,8 +20,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
-import de.aquadiva.ontologyselection.JoyceSymbolConstants;
-import de.aquadiva.ontologyselection.core.services.IConceptTaggingService;
+import de.aquadiva.joyce.JoyceSymbolConstants;
+import de.aquadiva.joyce.core.services.IConceptTaggingService;
 
 public class TermDiversityMeasurementService implements
 		ITermDiversityMeasurementService {

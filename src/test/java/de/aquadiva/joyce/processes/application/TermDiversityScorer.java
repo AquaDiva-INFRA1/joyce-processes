@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.application;
+package de.aquadiva.joyce.processes.application;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,9 +21,9 @@ import org.apache.tapestry5.ioc.RegistryBuilder;
 import org.apache.uima.util.FileUtils;
 import org.junit.Test;
 
-import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
-import de.aquadiva.ontologyselection.processes.services.ITermDiversityMeasurementService;
-import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
+import de.aquadiva.joyce.base.services.IOntologyDBService;
+import de.aquadiva.joyce.processes.services.ITermDiversityMeasurementService;
+import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
 
 public class TermDiversityScorer {
 	@Test

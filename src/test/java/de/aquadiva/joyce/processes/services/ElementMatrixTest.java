@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import static org.junit.Assert.*;
 
@@ -6,8 +6,9 @@ import java.util.ArrayList;
 
 import org.junit.Test;
 
-import de.aquadiva.ontologyselection.base.data.OntologySet;
-import de.aquadiva.ontologyselection.base.data.ScoreType;
+import de.aquadiva.joyce.base.data.OntologySet;
+import de.aquadiva.joyce.base.data.ScoreType;
+import de.aquadiva.joyce.processes.services.ElementMatrix;
 
 public class ElementMatrixTest {
 	

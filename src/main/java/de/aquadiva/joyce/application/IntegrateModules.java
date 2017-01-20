@@ -1,4 +1,4 @@
-package de.aquadiva.ontologyselection.application;
+package de.aquadiva.joyce.application;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,13 +35,13 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import de.aquadiva.ontologyselection.JoyceSymbolConstants;
-import de.aquadiva.ontologyselection.base.data.IOntology;
-import de.aquadiva.ontologyselection.base.data.Ontology;
-import de.aquadiva.ontologyselection.base.data.OntologyModule;
-import de.aquadiva.ontologyselection.base.services.IOWLParsingService;
-import de.aquadiva.ontologyselection.base.services.IOntologyDBService;
-import de.aquadiva.ontologyselection.processes.services.JoyceProcessesModule;
+import de.aquadiva.joyce.JoyceSymbolConstants;
+import de.aquadiva.joyce.base.data.IOntology;
+import de.aquadiva.joyce.base.data.Ontology;
+import de.aquadiva.joyce.base.data.OntologyModule;
+import de.aquadiva.joyce.base.services.IOWLParsingService;
+import de.aquadiva.joyce.base.services.IOntologyDBService;
+import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
 
 public class IntegrateModules {
 

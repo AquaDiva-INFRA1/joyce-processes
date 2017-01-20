@@ -1,9 +1,9 @@
-package de.aquadiva.ontologyselection.processes.services;
+package de.aquadiva.joyce.processes.services;
 
 import java.util.List;
 
-import de.aquadiva.ontologyselection.base.data.OntologySet;
-import de.aquadiva.ontologyselection.processes.services.OntologyModuleSelectionService.SelectionParameters;
+import de.aquadiva.joyce.base.data.OntologySet;
+import de.aquadiva.joyce.processes.services.OntologyModuleSelectionService.SelectionParameters;
 
 public interface IOntologyModuleSelectionService {
 	/**
