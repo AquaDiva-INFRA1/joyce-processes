@@ -3,7 +3,6 @@ package de.aquadiva.joyce.processes.services;
 import java.util.List;
 
 import de.aquadiva.joyce.base.data.OntologySet;
-import de.aquadiva.joyce.processes.services.OntologyModuleSelectionService.SelectionParameters;
 
 public interface IOntologyModuleSelectionService {
 	/**

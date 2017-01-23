@@ -9,22 +9,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.tapestry5.ioc.Registry;
 import org.apache.tapestry5.ioc.RegistryBuilder;
-import org.apache.uima.util.FileUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import de.aquadiva.joyce.base.services.IOntologyDBService;
 import de.aquadiva.joyce.processes.services.ITermDiversityMeasurementService;
 import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
 
+@Ignore
 public class TermDiversityScorer {
 	@Test
 	public void testScorer() throws Exception, IOException {

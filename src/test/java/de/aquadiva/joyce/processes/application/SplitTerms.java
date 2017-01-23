@@ -17,8 +17,8 @@ public class SplitTerms {
 	@Test
 	public void testScorer() throws Exception, IOException {
 		String[] terms;
-		Set<String> uniTerms=new HashSet<String>();;
-		try (InputStream is = new FileInputStream("selection_terms/the-file-set_domain_5.txt")) {
+		Set<String> uniTerms=new HashSet<String>();
+		try (InputStream is = new FileInputStream("src/test/resources/test-terms.txt")) {
 			List<String> lines = IOUtils.readLines(is, "UTF-8");
 			terms = lines.toArray(new String[lines.size()]);
 		}

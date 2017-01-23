@@ -20,8 +20,8 @@ import de.aquadiva.joyce.core.services.DescriptivityScorer.Descriptivity;
 import de.aquadiva.joyce.core.services.PopularityScorer.Popularity;
 import de.aquadiva.joyce.core.services.RichnessScorer.Richness;
 import de.aquadiva.joyce.core.services.UpToDateScorer.UpToDate;
-import de.aquadiva.ontologyselection.reasoning.services.JoyceReasoningModule;
-import de.aquadiva.ontologyselection.reasoning.services.ReasoningChain;
+import de.aquadiva.joyce.reasoning.services.JoyceReasoningModule;
+import de.aquadiva.joyce.reasoning.services.ReasoningChain;
 
 @SubModule(value = { JoyceCoreModule.class, JoyceReasoningModule.class })
 public class JoyceProcessesModule {

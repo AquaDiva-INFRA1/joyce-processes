@@ -168,7 +168,7 @@ public class OntologyModuleSelectionServiceTest {
 		// disease, Trastuzumab, Breast MRI examination";
 //		String inputTerms = "plant anatomical entity, plant structure, plant cell, adverse event, entity, project, bilateral shaking finding, reporting process";
 		String inputTerms ="magma";
-		List<OntologySet> recommendations = selectionService.selectForText(inputTerms, new OntologyModuleSelectionService.SelectionParameters());
+		List<OntologySet> recommendations = selectionService.selectForText(inputTerms, new SelectionParameters());
 
 		System.out.println("testSelectForText()");
 		System.out.println(recommendations.size());

@@ -890,21 +890,5 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		return str;
 	}
 
-	public static class SelectionParameters {
-
-		public enum SelectionType {
-			ONTOLOGY, CLUSTER_MODULE, LOCALITY_MODULE
-		}
-
-		public int sampleSize;
-		// the maximal number of
-		// ontologies/modules per
-		// set
-		// that shall be computed
-		public int maxElementsPerSet;
-		public Integer[] preferences;
-		public SelectionType selectionType;
-		public ScoreType[] scoreTypesToConsider;
-
-	}
+	
 }
