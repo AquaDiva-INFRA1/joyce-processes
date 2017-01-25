@@ -3,3 +3,6 @@
 .settings
 .project
 selection_*.txt
+/ERRORS_SETUP.txt
+/ontologyDownloadReport.txt
+/ontologyrepositorystats.csv

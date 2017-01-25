@@ -1,0 +1,48 @@
+# This file is meant to be used as a starting point to set up your own
+# Joyce configuration
+
+# ------ General Settings ------
+joyce.jpa.persistence.context=joyce
+
+# ------ Joyce Repository Setup ------
+
+# If you don't have one, get a free BioPortal API key by registering at
+# http://bioportal.bioontology.org/. It is required for the download
+# of ontologies from BioPortal.
+joyce.bioportal.apikey=
+joyce.setup.download.bioportal=true
+joyce.setup.convert=false
+# Here, you may restrict the downloaded ontologies by specifying the acronyms
+# of the ontologies you want to work with. For example: GO,GRO,MESH
+joyce.ontologies.download.acronyms=metaConceptMapping.tsv.gz
+
+# ----- Setup Input Resources ------
+joyce.ontologies.dictionary.full.path=resources/bioportalTerms.dict.gz
+# in the current state, meta classes are not supported
+joyce.ontologies.concepts.metamapping=
+
+# ----- Setup Output Resources -----
+joyce.ontologies.modules.concepts.mixedclassontologymapping=resources/classontologymapping.tsv.gz
+joyce.ontologies.dictionary.filtered.path=resources/bioportalTerms.filtered.dict.gz
+joyce.ontologies.concepts.metamapping=resources/metaConceptMapping.tsv.gz
+joyce.setup.errors.file=ERRORS_SETUP.txt
+joyce.ontologies.download.errors.file=ERRORS_DOWNLOAD.txt
+joyce.ontologies.downloaddir=src/test/resources/ontology-download
+joyce.ontologies.owl.dir=src/test/resources/ontology-download/owl
+
+
+# ------ Ontology or Module Selection Settings ------
+
+joyce.selection.selectontologies=false
+joyce.selection.selectlocalitymodules=true
+joyce.selection.selectconceptclustermodules=false
+
+
+# --- Database connection ----
+javax.persistence.jdbc.driver=org.h2.Driver
+javax.persistence.jdbc.url=jdbc:h2:file:ontology-db/db1;DB_CLOSE_DELAY=-1;MVCC=TRUE
+javax.persistence.jdbc.user=sa
+javax.persistence.jdbc.password=
+hibernate.show_sql=false
+hibernate.hbm2ddl.auto=update
+hibernate.jdbc.batch_size=50

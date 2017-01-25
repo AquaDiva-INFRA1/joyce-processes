@@ -1,14 +1,14 @@
 package de.aquadiva.joyce.processes.services;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import de.aquadiva.joyce.base.data.OntologySet;
 import de.aquadiva.joyce.base.data.ScoreType;
-import de.aquadiva.joyce.processes.services.ElementMatrix;
 
 public class ElementMatrixTest {
 	
@@ -60,6 +60,7 @@ public class ElementMatrixTest {
 //		fail("Not yet implemented");
 	}
 
+	@Ignore
 	@Test
 	public void testGetSubspaceElements() {
 		fail("Not yet implemented");

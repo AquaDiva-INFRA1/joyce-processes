@@ -17,17 +17,18 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
 	version="2.0">
 
-	<persistence-unit name="de.aquadiva.test.jpa">
+	<persistence-unit name="joyce">
 		<description>
-            Persistence unit the ontology selection tests.
+            Default Joyce persistence unit. It specifies an H2 file database at the relative path "ontology-db" where all databases and static modules will be stored in.
         </description>
 
-		<class>de.aquadiva.ontologyselection.base.data.Ontology</class>
-		<class>de.aquadiva.ontologyselection.base.data.OntologyModule</class>
+		<class>de.aquadiva.joyce.base.data.Ontology</class>
+		<class>de.aquadiva.joyce.base.data.OntologyModule</class>
 
 		<properties>
 			<property name="javax.persistence.jdbc.driver" value="org.h2.Driver" />
-			<property name="javax.persistence.jdbc.url" value="jdbc:h2:file:/Users/faessler/tmp/db1;DB_CLOSE_DELAY=-1;MVCC=TRUE" />
+			<property name="javax.persistence.jdbc.url"
+				value="jdbc:h2:file:ontology-db/db1;DB_CLOSE_DELAY=-1;MVCC=TRUE" />
 			<property name="javax.persistence.jdbc.user" value="sa" />
 			<property name="javax.persistence.jdbc.password" value="" />
 

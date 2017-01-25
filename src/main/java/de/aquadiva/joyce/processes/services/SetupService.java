@@ -105,6 +105,7 @@ public class SetupService implements ISetupService {
 	private Logger log;
 	private IOntologyDownloadService downloadService;
 	private IOntologyModularizationService modularizationService;
+	@Deprecated
 	private IOntologyFormatConversionService formatConversionService;
 	private IOntologyDBService dbService;
 	private IConstantOntologyScorer constantScoringChain;
@@ -115,6 +116,7 @@ public class SetupService implements ISetupService {
 	private File errorFile;
 	private String dictFullPath;
 	private String dictFilteredPath;
+	@Deprecated
 	private boolean doConvert;
 	private IMetaConceptService metaConceptService;
 	private IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService;

@@ -17,11 +17,11 @@
 				<version>2.2</version>
 				<configuration>
 					<descriptors>
-						<descriptor>ados-assembly.xml</descriptor>
+						<descriptor>joyce-assembly.xml</descriptor>
 					</descriptors>
 					<archive>
 						<manifest>
-							<mainClass>de.aquadiva.ontologyselection.application.ADOSApplication</mainClass>
+							<mainClass>de.aquadiva.joyce.application.JoyceApplication</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

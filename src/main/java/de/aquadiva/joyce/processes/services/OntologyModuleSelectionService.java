@@ -232,50 +232,22 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		// find concepts for the input terms
 		log.debug("Finding concepts in input text {}", text);
 		Multiset<String> mixedClassesInText = taggingService.findConcepts(text);
+		if (mixedClassesInText.isEmpty()) {
+			log.info("No concept names were found in the input text.");
+			return Collections.emptyList();
+		}
 		Set<String> iriClassesInText = metaConceptService.convertMixedClassesToIriClasses(mixedClassesInText);
-
-		// the next three lines were used for evaluation when the concept list
-		// was fixed so we didn't have to load the concept dictionary on each
-		// evaluation run.
-		// Multiset<String> concepts = HashMultiset.create();
-		// String ourconcepts = "atid6833, atid15455,
-		// http://purl.obolibrary.org/obo/WSIO_compression_004, atid254780,
-		// atid212432, atid4050,
-		// http://phenomebrowser.net/ontologies/mesh/mesh.owl#D002641,
-		// atid29911, atid124130, atid7009, atid219971,
-		// http://phenomebrowser.net/ontologies/mesh/mesh.owl#G05.360.340.037,
-		// atid59295, atid1079, atid1956, atid18608, atid158,
-		// http://phenomebrowser.net/ontologies/mesh/mesh.owl#Z01.107.567.875.510.350.200,
-		// atid343339, atid20904, atid200172,
-		// http://doe-generated-ontology.com/OntoAD#C0080103,
-		// http://doe-generated-ontology.com/OntoAD#C0027361, atid112,
-		// http://purl.obolibrary.org/obo/ENVO_00005803, atid261, atid59438,
-		// http://purl.obolibrary.org/obo/TGMA_0001246, atid7075, atid235407,
-		// http://purl.obolibrary.org/obo/NCBIGene_40633, atid192148,
-		// http://phenomebrowser.net/ontologies/mesh/mesh.owl#Z01.433.305,
-		// atid996 x 2, atid229581, atid205028, atid29665, atid192562, atid7061,
-		// atid528, atid292432, atid192040,
-		// http://doe-generated-ontology.com/OntoAD#C1524026 x 2,
-		// http://phenomebrowser.net/ontologies/mesh/mesh.owl#D059646,
-		// http://purl.obolibrary.org/obo/NCBIGene_11067, atid6367, atid183535,
-		// http://purl.obolibrary.org/obo/ENVO_0010080, atid190349, atid5537,
-		// http://phenomebrowser.net/ontologies/mesh/mesh.owl#Z01.107.567.875.350.350.200,
-		// http://who.int/icf#e2253, atid41238,
-		// http://purl.obolibrary.org/obo/ENVO_01000703, atid256088,
-		// http://doe-generated-ontology.com/OntoAD#C0232117,
-		// http://purl.obolibrary.org/obo/NCBIGene_32506, atid14195, atid13960,
-		// atid13132, atid12153, atid923,
-		// http://doe-generated-ontology.com/OntoAD#C0699900,
-		// http://who.int/icf#d4104, atid197151, atid2128,
-		// http://purl.obolibrary.org/obo/CHMO_0000152, atid20071, atid41121,
-		// http://purl.obolibrary.org/obo/UBERON_0004529,
-		// http://purl.obolibrary.org/obo/TGMA_0000677,
-		// http://purl.obolibrary.org/obo/TGMA_0000678";
-		// concepts.addAll(Arrays.asList(ourconcepts.split(", ")));
+		if (iriClassesInText.isEmpty())
+			throw new IllegalStateException(
+					"Concept names - possibly aggregates - were found in the input text and concept IDs were received but the conversion to pure class IRIs did return an empty result. Inconsistent data.");
 
 		log.info("Extracted concept IDs from input text: {}", mixedClassesInText);
 		// get the ids of all modules that contain at least one input concept
 		Multiset<String> moduleIds = metaConceptService.getOntologiesForMixedClasses(mixedClassesInText);
+
+		if (moduleIds.isEmpty())
+			throw new IllegalStateException(
+					"Concept names were found in the input text but no ontologies containing those concepts were found in the mapping file.");
 
 		log.debug("Module IDs containing extracted concepts: {}", moduleIds);
 		// score these ontologies w.r.t. the defined scorers
@@ -288,6 +260,10 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		String[] array = moduleIds.elementSet().toArray(new String[moduleIds.elementSet().size()]);
 		log.info("Getting all module IDs from database: {}", Arrays.toString(array));
 		List<Ontology> allOntologies = dbService.getOntologiesByIds(array);
+		if (allOntologies.size() != moduleIds.size())
+			throw new IllegalStateException(
+					"Concepts were found in the input text for " + moduleIds.size() + " ontologies or modules but "
+							+ allOntologies.size() + " ontologies or modules were returned from the database.");
 		Set<Ontology> ontologiesToScore = new HashSet<>();
 		List<Future<Ontology>> localityModules = new ArrayList<>();
 		for (Ontology o : allOntologies) {
@@ -890,5 +866,4 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		return str;
 	}
 
-	
 }
