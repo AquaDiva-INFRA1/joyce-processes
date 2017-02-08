@@ -13,7 +13,7 @@ joyce.ontologies.concepts.metamapping=resources/metaConceptMapping.tsv.gz
 # If you don't have one, get a free BioPortal API key by registering at
 # http://bioportal.bioontology.org/. It is required for the download
 # of ontologies from BioPortal.
-joyce.bioportal.apikey=
+joyce.bioportal.apikey=<YOUR API KEY>
 joyce.setup.download.bioportal=true
 joyce.setup.convert=true
 joyce.setup.import=true
@@ -33,6 +33,7 @@ joyce.ontologies.owl.dir=ontology-download/owl
 
 # ------ Ontology or Module Selection Settings ------
 
+joyce.ontologies.concepts.gazetteer.conffile=<GAZETTEER CONFIG FILE>
 joyce.selection.selectontologies=false
 joyce.selection.selectlocalitymodules=true
 joyce.selection.selectconceptclustermodules=false

@@ -255,9 +255,11 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		String[] array = moduleIds.elementSet().toArray(new String[moduleIds.elementSet().size()]);
 		log.info("Getting all module IDs from database: {}", Arrays.toString(array));
 		List<Ontology> allOntologies = dbService.getOntologiesByIds(array);
-		if (allOntologies.size() != moduleIds.size())
+		for (Ontology o : allOntologies)
+			System.out.println(o.getId());
+		if (allOntologies.size() != moduleIds.elementSet().size())
 			throw new IllegalStateException(
-					"Concepts were found in the input text for " + moduleIds.size() + " ontologies or modules but "
+					"Concepts were found in the input text for " + moduleIds.elementSet().size() + " ontologies or modules but "
 							+ allOntologies.size() + " ontologies or modules were returned from the database.");
 		Set<Ontology> ontologiesToScore = new HashSet<>();
 		List<Future<Ontology>> localityModules = new ArrayList<>();
