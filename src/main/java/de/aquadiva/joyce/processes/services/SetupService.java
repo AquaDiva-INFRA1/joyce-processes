@@ -8,8 +8,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -34,6 +43,7 @@ import de.aquadiva.joyce.base.services.IOntologyDownloadService;
 import de.aquadiva.joyce.base.services.IOntologyFormatConversionService;
 import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
 import de.aquadiva.joyce.core.services.IOntologyModularizationService;
+import de.aquadiva.joyce.util.OntologyModularizationException;
 
 /**
  * Sets up the environment for ontology module selection.<br/>
@@ -75,10 +85,11 @@ import de.aquadiva.joyce.core.services.IOntologyModularizationService;
  * <ol>
  * <li>Downloads original ontology files (mainly in OWL and OBO format) from
  * BioPortal IF the configuration property
- * {@link JoyceSymbolConstants#SETUP_DOWNLOAD_BIOPORTAL} is set to <tt>true</tt>..
- * </li>
+ * {@link JoyceSymbolConstants#SETUP_DOWNLOAD_BIOPORTAL} is set to
+ * <tt>true</tt>..</li>
  * <li>Converts OBO ontologies to OWL format IF the configuration property
- * {@link JoyceSymbolConstants#SETUP_CONVERT_TO_OWL} is set to <tt>true</tt>.</li>
+ * {@link JoyceSymbolConstants#SETUP_CONVERT_TO_OWL} is set to
+ * <tt>true</tt>.</li>
  * <li>Imports all ontologies in OWL format (also converted ones) into the
  * database.</li>
  * <li>Performs a static cluster-based ontology partitioning on each ontology,
@@ -105,7 +116,6 @@ public class SetupService implements ISetupService {
 	private Logger log;
 	private IOntologyDownloadService downloadService;
 	private IOntologyModularizationService modularizationService;
-	@Deprecated
 	private IOntologyFormatConversionService formatConversionService;
 	private IOntologyDBService dbService;
 	private IConstantOntologyScorer constantScoringChain;
@@ -116,10 +126,11 @@ public class SetupService implements ISetupService {
 	private File errorFile;
 	private String dictFullPath;
 	private String dictFilteredPath;
-	@Deprecated
 	private boolean doConvert;
 	private IMetaConceptService metaConceptService;
 	private IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService;
+	private boolean doImport;
+	private ExecutorService executorService;
 
 	public SetupService(Logger log, IOntologyDownloadService downloadService,
 			IOntologyFormatConversionService formatConversionService, IOntologyDBService dbService,
@@ -127,11 +138,14 @@ public class SetupService implements ISetupService {
 			IMetaConceptService metaConceptService, @ConstantScoringChain IConstantOntologyScorer constantScoringChain,
 			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL) boolean doDownload,
 			@Symbol(JoyceSymbolConstants.SETUP_CONVERT_TO_OWL) boolean doConvert,
+			@Symbol(JoyceSymbolConstants.SETUP_IMPORT_ONTOLOGIES) boolean doImport,
 			@Symbol(JoyceSymbolConstants.SETUP_ERROR_FILE) File errorFile,
 			@Symbol(JoyceSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING) String classOntologyMappingFile,
 			@Symbol(JoyceSymbolConstants.ONTOLOGIES_FOR_DOWNLOAD) String requestedAcronyms,
 			@Symbol(JoyceSymbolConstants.DICT_FULL_PATH) String dictFullPath,
-			@Symbol(JoyceSymbolConstants.DICT_FILTERED_PATH) String dictFilteredPath, IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService) {
+			@Symbol(JoyceSymbolConstants.DICT_FILTERED_PATH) String dictFilteredPath,
+			IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService,
+			ExecutorService executorService) {
 		this.log = log;
 		this.downloadService = downloadService;
 		this.formatConversionService = formatConversionService;
@@ -142,10 +156,12 @@ public class SetupService implements ISetupService {
 		this.constantScoringChain = constantScoringChain;
 		this.doDownload = doDownload;
 		this.doConvert = doConvert;
+		this.doImport = doImport;
 		this.errorFile = errorFile;
 		this.dictFullPath = dictFullPath;
 		this.dictFilteredPath = dictFilteredPath;
 		this.ontologyRepositoryStatsPrinterService = ontologyRepositoryStatsPrinterService;
+		this.executorService = executorService;
 		this.mixedClassOntologyMappingFile = classOntologyMappingFile.endsWith(".gz")
 				? new File(classOntologyMappingFile) : new File(classOntologyMappingFile + ".gz");
 		if (!StringUtils.isBlank(requestedAcronyms))
@@ -170,79 +186,133 @@ public class SetupService implements ISetupService {
 			log.info("Converting downladed ontologies to OWL format where possible.");
 			formatConversionService.convertFromDownloadDirToOwlDir();
 		}
-		log.info("Importing downloaded ontologies into the database...");
-		List<Ontology> ontologies = dbService.importBioPortalOntologiesFromConfigDirs();
+		List<Ontology> ontologies;
+		if (doImport) {
+			log.info("Importing downloaded ontologies into the database...");
+			ontologies = dbService.importBioPortalOntologiesFromConfigDirs();
+		} else {
+			ontologies = dbService.getAllOntologies();
+		}
 		log.debug(
 				"Reading the mapping that maps class IRIs to meta class IDs so we can set meta classes to ontologies and modules");
 		Multimap<String, String> mixedClassToModuleMapping = HashMultimap.create();
-		int progress = 0;
-		int successcount = 0;
+
+		Map<String, Future<List<OntologyModule>>> ontologyModules = new HashMap<>();
+		// unfortunately, it seems the modularization is not thread safe...
+		// thus, the above map is not actually used
+//		log.info("Modularizing ontologies concurrently");
+//		for (Ontology o : ontologies) {
+//			ModularizationWorker worker = new ModularizationWorker(o);
+//			Future<List<OntologyModule>> modulesFuture = executorService.submit(worker);
+//			ontologyModules.put(o.getId(), modulesFuture);
+//		}
+
+		SetupStats stats = new SetupStats();
 		// For ontology scoring
 		for (Ontology o : ontologies) {
-			dbService.beginTransaction();
-			log.debug("Processing {}. ontology of {} (ID: {})",
-					new Object[] { progress++, ontologies.size(), o.getId() });
-			try {
-				log.debug("Parsing ontology {}", o.getId());
-				try {
-					owlParsingService.parse(o);
-				} catch (Throwable t) {
-					o.setHasParsingError(true);
-					throw t;
-				}
-				o.setHasParsingError(false);
-				log.debug("Retrieving class IDs of ontology {}.", o.getId());
-				Set<String> classIdsForOntology = metaConceptService.getMixedClassIdsForOntology(o);
-				o.setClassIds(classIdsForOntology);
-				log.debug("Running constant scorers on ontology {}", o.getId());
-				constantScoringChain.score(o);
-				log.debug("Adding ontology classes for ontology {} to class-ontology mapping", o.getId());
-				addToMixedClassModuleMapping(classIdsForOntology, o, mixedClassToModuleMapping);
-				log.debug("Modularizing ontology {}", o.getId());
-				List<OntologyModule> modules;
-				try {
-					modules = modularizationService.modularize(o);
-				} catch (Exception e) {
-					o.setHasModularizationError(true);
-					throw e;
-				}
-				o.setHasModularizationError(false);
-				for (OntologyModule om : modules) {
-					log.debug("Retrieving class IDs of module {}", om.getId());
-					Set<String> mixedClassIdsForModule = metaConceptService.getMixedClassIdsForOntology(om);
-					om.setClassIds(mixedClassIdsForModule);
-					log.debug("Adding classes of module {} to class-ontology mapping", om.getId());
-					addToMixedClassModuleMapping(mixedClassIdsForModule, om, mixedClassToModuleMapping);
-					log.debug("Running constant scorers on module {}", om.getId());
-					constantScoringChain.score(om);
-				}
-				dbService.storeOntologies(modules, false);
-				successcount++;
-				log.debug("Writing ontology scores back to database");
-				// for ontology scoring
-				dbService.commit();
-			} catch (Exception | Error e) {
-				// Note that we even catch "Error" (the Throwable that should
-				// not be catched) because it may be thrown by the OWLApi (OBO
-				// parser) when trying to parse OBO (which actually happened
-				// because it was not OWL and OBO was guessed; then the error
-				// was thrown because the characters of the ontology were
-				// complete rubbish)
-				log.error("{} occurred while processing ontology {}: {}",
-						new Object[] { e.getClass().getSimpleName(), o.getId(), e });
-				log.error("Stack trace: ", e);
-				FileUtils.write(errorFile, e.getClass().getSimpleName() + " occurred while processing ontology "
-						+ o.getId() + ": " + e.getMessage() + "\n", "UTF-8", true);
-				FileUtils.write(errorFile, "Full stack trace: " + Arrays.toString(e.getStackTrace()) + "\n", "UTF-8",
-						true);
-			}
+			processOntology(ontologies, mixedClassToModuleMapping, stats, o, ontologyModules);
 		}
-		log.info("{} ontologies were successfully processed.", successcount);
+		log.info("{} ontologies were successfully processed.", stats.successcount);
 		writeMixedClassToModuleMappingFile(mixedClassToModuleMapping);
 		log.info("Filtering full dictionary at {} to smaller dictionary at {}.", dictFullPath, dictFilteredPath);
 		filterConceptDictionary(mixedClassToModuleMapping.keySet());
 		log.info(getClass().getSimpleName() + " finished processing.");
 		ontologyRepositoryStatsPrinterService.printOntologyRepositoryStats(new File("ontologyrepositorystats.csv"));
+
+	}
+
+	private class ModularizationWorker implements Callable<List<OntologyModule>> {
+		private Ontology o;
+
+		public ModularizationWorker(Ontology o) {
+			this.o = o;
+		}
+
+		@Override
+		public List<OntologyModule> call() throws Exception {
+			return modularizationService.modularize(o);
+		}
+
+	}
+
+	private void processOntology(List<Ontology> ontologies, Multimap<String, String> mixedClassToModuleMapping,
+			SetupStats stats, Ontology o, Map<String, Future<List<OntologyModule>>> ontologyModules) {
+		dbService.beginTransaction();
+		log.debug("Processing {}. ontology of {} (ID: {})",
+				new Object[] { ++stats.progress, ontologies.size(), o.getId() });
+		try {
+			log.debug("Parsing ontology {}", o.getId());
+			try {
+				owlParsingService.parse(o);
+				owlParsingService.clearOntologies();
+			} catch (Throwable t) {
+				o.setHasParsingError(true);
+				throw t;
+			}
+			o.setHasParsingError(false);
+			log.debug("Retrieving class IDs of ontology {}.", o.getId());
+			Set<String> classIdsForOntology = metaConceptService.getMixedClassIdsForOntology(o);
+			o.setClassIds(classIdsForOntology);
+			log.debug("Running constant scorers on ontology {}", o.getId());
+			constantScoringChain.score(o);
+			log.debug("Adding ontology classes for ontology {} to class-ontology mapping", o.getId());
+			addToMixedClassModuleMapping(classIdsForOntology, o, mixedClassToModuleMapping);
+
+			log.debug("Modularizing ontology {}", o.getId());
+			List<OntologyModule> modules = null;
+			try {
+				 modules = modularizationService.modularize(o);
+			}catch (OntologyModularizationException e) {
+				o.setHasModularizationError(true);
+				throw e;
+			}
+//				modules = ontologyModules.get(o.getId()).get(120, TimeUnit.MINUTES);
+//			} catch (InterruptedException | ExecutionException e) {
+//				o.setHasModularizationError(true);
+//				log.error("Exception happened during modularization: " + e.getMessage(), e);
+//			} catch (TimeoutException e) {
+//				log.debug("Modularization of ontology {} timed out, no modules are created for this ontology.",
+//						o.getId());
+//				ontologyModules.get(o.getId()).cancel(true);
+//				o.setHasModularizationError(true);
+//			}
+			o.setHasModularizationError(false);
+			if (modules == null) {
+				modules = Collections.emptyList();
+			}
+			for (OntologyModule om : modules) {
+				log.debug("Retrieving class IDs of module {}", om.getId());
+				Set<String> mixedClassIdsForModule = metaConceptService.getMixedClassIdsForOntology(om);
+				om.setClassIds(mixedClassIdsForModule);
+				log.debug("Adding classes of module {} to class-ontology mapping", om.getId());
+				addToMixedClassModuleMapping(mixedClassIdsForModule, om, mixedClassToModuleMapping);
+				log.debug("Running constant scorers on module {}", om.getId());
+				constantScoringChain.score(om);
+			}
+			dbService.storeOntologies(modules, false);
+			stats.successcount++;
+			log.debug("Writing ontology scores back to database");
+			// for ontology scoring
+			dbService.commit();
+		} catch (Exception | Error e) {
+			// Note that we even catch "Error" (the Throwable that should
+			// not be catched) because it may be thrown by the OWLApi (OBO
+			// parser) when trying to parse OBO (which actually happened
+			// because it was not OWL and OBO was guessed; then the error
+			// was thrown because the characters of the ontology were
+			// complete rubbish)
+			log.error("{} occurred while processing ontology {}: ",
+					new Object[] { e.getClass().getSimpleName(), o.getId(), e });
+			log.error("Stack trace: ", e);
+			try {
+				FileUtils.write(errorFile, e.getClass().getSimpleName() + " occurred while processing ontology "
+						+ o.getId() + ": " + e.getMessage() + "\n", "UTF-8", true);
+				FileUtils.write(errorFile, "Full stack trace: " + Arrays.toString(e.getStackTrace()) + "\n", "UTF-8",
+						true);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
 	}
 
 	private void filterConceptDictionary(Set<String> actualKnownClasses) {
@@ -290,5 +360,10 @@ public class SetupService implements ISetupService {
 			Multimap<String, String> classToModuleMapping) {
 		for (String classId : classIdsForModule)
 			classToModuleMapping.put(classId, o.getId());
+	}
+
+	private class SetupStats {
+		int progress = 0;
+		int successcount = 0;
 	}
 }

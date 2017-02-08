@@ -17,7 +17,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.tapestry5.ioc.annotations.Symbol;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLEntity;
@@ -25,14 +24,10 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 
-import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
-import com.clarkparsia.pellet.owlapiv3.Reasoner;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 
-import de.aquadiva.joyce.JoyceSymbolConstants;
 import de.aquadiva.joyce.base.data.IOntology;
 import de.aquadiva.joyce.base.data.IOntologySet;
 import de.aquadiva.joyce.base.data.Ontology;
@@ -44,10 +39,10 @@ import de.aquadiva.joyce.base.services.IMetaConceptService;
 import de.aquadiva.joyce.base.services.IOWLParsingService;
 import de.aquadiva.joyce.base.services.IOntologyDBService;
 import de.aquadiva.joyce.base.services.IVariableOntologyScorer;
-import de.aquadiva.joyce.core.services.IConceptTaggingService;
 import de.aquadiva.joyce.core.services.ClassCoverageScorer.ClassCoverage;
 import de.aquadiva.joyce.core.services.ClassOverheadScorer.ClassOverhead;
 import de.aquadiva.joyce.core.services.ClassOverlapScorer.ClassOverlap;
+import de.aquadiva.joyce.core.services.IConceptTaggingService;
 import uk.ac.manchester.cs.owlapi.modularity.ModuleType;
 import uk.ac.manchester.cs.owlapi.modularity.SyntacticLocalityModuleExtractor;
 
@@ -171,7 +166,7 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 				// of this ontology from the OWLOntologyManager
 				IRI moduleIri = IRI
 						.create(o.getOwlOntology().getOntologyID().getOntologyIRI().toString() + "_localitymodule");
-				owlParsingService.removeIntology(moduleIri);
+				owlParsingService.clearOntologies();
 				SyntacticLocalityModuleExtractor extractor = new SyntacticLocalityModuleExtractor(ontologyManager,
 						o.getOwlOntology(), ModuleType.STAR);
 				// OWLDataFactory dataFactory =
