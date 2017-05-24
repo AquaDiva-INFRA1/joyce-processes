@@ -1,5 +1,5 @@
 <assembly>
-  <id>joyce-assembly</id>
+  <id>app</id>
   <formats>
   	<format>jar</format>
   </formats>

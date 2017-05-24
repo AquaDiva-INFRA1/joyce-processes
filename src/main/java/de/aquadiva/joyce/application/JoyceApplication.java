@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -22,6 +23,7 @@ import de.aquadiva.joyce.processes.services.ISetupService;
 import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
 import de.aquadiva.joyce.processes.services.SelectionParameters;
 import de.aquadiva.joyce.processes.services.SelectionParameters.SelectionType;
+import de.julielab.bioportal.util.BioPortalToolUtils;
 
 /**
  * A CLI application for setup and local use. Should go into an interface
@@ -48,6 +50,17 @@ public class JoyceApplication {
 			registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 			switch (mode) {
 			case "-s":
+				if (args.length < 2) {
+					System.out.println("No configuration file was specified. Please select an option:");
+					System.out.println("1. Create a configuration file");
+					System.out.println("2. Exit");
+					String choice = BioPortalToolUtils.readLineFromStdIn();
+					if (!choice.equals("1") && !choice.equals("1."))
+						System.exit(0);
+					Properties config = new Properties();
+					config.load(JoyceApplication.class.getResourceAsStream("/configuratoin.properties.template"));
+					config.list(System.out);
+				}
 				ISetupService setupService = registry.getService(ISetupService.class);
 				setupService.setupSelectionSystem();
 				break;
