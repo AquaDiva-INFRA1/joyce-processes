@@ -14,12 +14,14 @@ joyce.ontologies.concepts.metamapping=resources/metaConceptMapping.tsv.gz
 # http://bioportal.bioontology.org/. It is required for the download
 # of ontologies from BioPortal.
 joyce.bioportal.apikey=<YOUR API KEY>
-joyce.setup.download.bioportal=true
+joyce.setup.download.bioportal.ontologies=true
+joyce.setup.download.bioportal.mappings=true
 joyce.setup.convert=true
 joyce.setup.import=true
 # Here, you may restrict the downloaded ontologies by specifying the acronyms
 # of the ontologies you want to work with. For example: GO,GRO,MESH
 joyce.ontologies.download.acronyms=
+joyce.mappings.download.acronyms=
 
 
 # ----- Setup Output Resources -----

@@ -1,11 +1,27 @@
 package de.aquadiva.joyce.application;
 
+import static de.aquadiva.joyce.JoyceSymbolConstants.BIOPORTAL_API_KEY;
+import static de.aquadiva.joyce.JoyceSymbolConstants.MAPPINGS_FOR_DOWNLOAD;
+import static de.aquadiva.joyce.JoyceSymbolConstants.ONTOLOGIES_FOR_DOWNLOAD;
+import static de.aquadiva.joyce.JoyceSymbolConstants.SETUP_CONVERT_TO_OWL;
+import static de.aquadiva.joyce.JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS;
+import static de.aquadiva.joyce.JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES;
+import static de.aquadiva.joyce.JoyceSymbolConstants.SETUP_IMPORT_ONTOLOGIES;
+import static de.julielab.bioportal.util.BioPortalToolUtils.readLineFromStdIn;
+import static de.julielab.bioportal.util.BioPortalToolUtils.readLineFromStdInWithMessage;
+
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -54,12 +70,11 @@ public class JoyceApplication {
 					System.out.println("No configuration file was specified. Please select an option:");
 					System.out.println("1. Create a configuration file");
 					System.out.println("2. Exit");
-					String choice = BioPortalToolUtils.readLineFromStdIn();
+					String choice = readLineFromStdIn();
 					if (!choice.equals("1") && !choice.equals("1."))
 						System.exit(0);
-					Properties config = new Properties();
-					config.load(JoyceApplication.class.getResourceAsStream("/configuratoin.properties.template"));
-					config.list(System.out);
+					doInteractiveConfiguration();
+					
 				}
 				ISetupService setupService = registry.getService(ISetupService.class);
 				setupService.setupSelectionSystem();
@@ -107,7 +122,6 @@ public class JoyceApplication {
 						IOUtils.write(classId + "\n", os);
 					}
 				}
-				
 
 				for (IOntology o : firstResult.getOntologies()) {
 					File ontologyFile = o.getFile();
@@ -130,7 +144,54 @@ public class JoyceApplication {
 			}
 		}
 		time = System.currentTimeMillis() - time;
-		log.info("Application finished in {}ms ({}s).", time, time/1000);
+		log.info("Application finished in {}ms ({}s).", time, time / 1000);
+	}
+
+	private static void doInteractiveConfiguration() throws IOException {
+		String apikey = readLineFromStdInWithMessage("Please specify your BioPortal API key:");
+		boolean downloadOntologies;
+		boolean downloadMappings;
+		String[] ontoDownloadRestriction = null;
+		String[] mappingsDownloadRestriction = null;
+		boolean convert;
+		boolean importOntologies;
+		
+		downloadOntologies = BioPortalToolUtils
+				.readYesNoFromStdInWithMessage("Do you wish to download ontologies from BioPortal?", true);
+		if (downloadOntologies) {
+			String input = readLineFromStdInWithMessage(
+					"Please specify BioPortal ontology acronyms you would like to restrict the download to (leave empty to download all ontologies):");
+			if (input.trim().length() > 0)
+				ontoDownloadRestriction = input.trim().split("\\s+");
+		}
+		downloadMappings = BioPortalToolUtils.readYesNoFromStdInWithMessage(
+				"Do you wish to download ontology mappings from BioPortal?", true);
+		if (downloadMappings) {
+			String input = readLineFromStdInWithMessage(
+					"Please specify BioPortal ontology acronyms you would like to restrict the download to (leave empty to download mappings for all ontologies):");
+			if (input.trim().length() > 0)
+				mappingsDownloadRestriction = input.trim().split("\\s+");
+		}
+		convert = BioPortalToolUtils.readYesNoFromStdInWithMessage(
+				"Do you wish to convert all ontologies into a common OWL format?", true);
+		importOntologies = BioPortalToolUtils.readYesNoFromStdInWithMessage(
+				"Do you wish to import all ontologies into the database?", true);
+		
+		Properties config = new Properties();
+		config.load(JoyceApplication.class.getResourceAsStream("/configuration.properties.template"));
+		config.setProperty(BIOPORTAL_API_KEY, apikey);
+		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES, String.valueOf(downloadOntologies));
+		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD, Stream.of(ontoDownloadRestriction).collect(Collectors.joining(",")));
+		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS, String.valueOf(downloadOntologies));
+		config.setProperty(MAPPINGS_FOR_DOWNLOAD, Stream.of(mappingsDownloadRestriction).collect(Collectors.joining(",")));
+		config.setProperty(SETUP_CONVERT_TO_OWL, String.valueOf(convert));
+		config.setProperty(SETUP_IMPORT_ONTOLOGIES, String.valueOf(importOntologies));
+		
+		String configFilename = BioPortalToolUtils.readLineFromStdInWithMessage("Where would you like to store the configuration file?", "configuration.properties");
+		
+		try (Writer w = new BufferedWriter(new FileWriter(configFilename))) {
+			config.store(w, "This is a JOYCE configuration file.\nExplanations for all configuration symbols can be found in the JavaDocs of\njcore-base:de.aquadiva.joyce.JoyceSymbolConstants");
+		}
 	}
 
 }

@@ -7,13 +7,13 @@ import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.lang.StringUtils;
+
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 
 
 public class SplitTerms {
-	
 	@Test
 	public void testScorer() throws Exception, IOException {
 		String[] terms;

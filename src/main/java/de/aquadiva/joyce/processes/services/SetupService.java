@@ -85,7 +85,7 @@ import de.aquadiva.joyce.util.OntologyModularizationException;
  * <ol>
  * <li>Downloads original ontology files (mainly in OWL and OBO format) from
  * BioPortal IF the configuration property
- * {@link JoyceSymbolConstants#SETUP_DOWNLOAD_BIOPORTAL} is set to
+ * {@link JoyceSymbolConstants#SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES} is set to
  * <tt>true</tt>..</li>
  * <li>Converts OBO ontologies to OWL format IF the configuration property
  * {@link JoyceSymbolConstants#SETUP_CONVERT_TO_OWL} is set to
@@ -136,7 +136,7 @@ public class SetupService implements ISetupService {
 			IOntologyFormatConversionService formatConversionService, IOntologyDBService dbService,
 			IOntologyModularizationService modularizationService, IOWLParsingService owlParsingService,
 			IMetaConceptService metaConceptService, @ConstantScoringChain IConstantOntologyScorer constantScoringChain,
-			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL) boolean doDownload,
+			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES) boolean doDownload,
 			@Symbol(JoyceSymbolConstants.SETUP_CONVERT_TO_OWL) boolean doConvert,
 			@Symbol(JoyceSymbolConstants.SETUP_IMPORT_ONTOLOGIES) boolean doImport,
 			@Symbol(JoyceSymbolConstants.SETUP_ERROR_FILE) File errorFile,
