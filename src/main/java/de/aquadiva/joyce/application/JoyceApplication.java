@@ -30,6 +30,7 @@ import org.apache.tapestry5.ioc.RegistryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.aquadiva.joyce.JoyceSymbolConstants;
 import de.aquadiva.joyce.base.data.IOntology;
 import de.aquadiva.joyce.base.data.InfoType;
 import de.aquadiva.joyce.base.data.OntologySet;
@@ -66,16 +67,25 @@ public class JoyceApplication {
 			registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 			switch (mode) {
 			case "-s":
-				if (args.length < 2) {
+				String configFilePath = System.getProperty(JoyceSymbolConstants.JOYCE_CONFIG_FILE);
+				if (null == configFilePath && args.length < 2) {
 					System.out.println("No configuration file was specified. Please select an option:");
 					System.out.println("1. Create a configuration file");
-					System.out.println("2. Exit");
+					System.out.println("2. Use default configuration file (./configuration.properties)");
+					System.out.println("3. Exit");
 					String choice = readLineFromStdIn();
-					if (!choice.equals("1") && !choice.equals("1."))
+					if (choice.equals("3") || choice.equals("3."))
 						System.exit(0);
-					doInteractiveConfiguration();
-					
+					else if (choice.equals("2") || choice.equals("2."))
+						configFilePath = "configuration.properties";
+					else
+						configFilePath = doInteractiveConfiguration();
+				} else if (null == configFilePath) {
+					configFilePath = args[1];
 				}
+				System.setProperty(JoyceSymbolConstants.JOYCE_CONFIG_FILE, configFilePath);
+				registry.shutdown();
+				registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 				ISetupService setupService = registry.getService(ISetupService.class);
 				setupService.setupSelectionSystem();
 				break;
@@ -147,7 +157,7 @@ public class JoyceApplication {
 		log.info("Application finished in {}ms ({}s).", time, time / 1000);
 	}
 
-	private static void doInteractiveConfiguration() throws IOException {
+	private static String doInteractiveConfiguration() throws IOException {
 		String apikey = readLineFromStdInWithMessage("Please specify your BioPortal API key:");
 		boolean downloadOntologies;
 		boolean downloadMappings;
@@ -155,43 +165,49 @@ public class JoyceApplication {
 		String[] mappingsDownloadRestriction = null;
 		boolean convert;
 		boolean importOntologies;
-		
+
 		downloadOntologies = BioPortalToolUtils
 				.readYesNoFromStdInWithMessage("Do you wish to download ontologies from BioPortal?", true);
 		if (downloadOntologies) {
 			String input = readLineFromStdInWithMessage(
-					"Please specify BioPortal ontology acronyms you would like to restrict the download to (leave empty to download all ontologies):");
+					"Please specify BioPortal ontology acronyms, separated by whitespace, you would like to restrict the download to (leave empty to download all ontologies):");
 			if (input.trim().length() > 0)
 				ontoDownloadRestriction = input.trim().split("\\s+");
 		}
-		downloadMappings = BioPortalToolUtils.readYesNoFromStdInWithMessage(
-				"Do you wish to download ontology mappings from BioPortal?", true);
+		downloadMappings = BioPortalToolUtils
+				.readYesNoFromStdInWithMessage("Do you wish to download ontology mappings from BioPortal?", true);
 		if (downloadMappings) {
 			String input = readLineFromStdInWithMessage(
-					"Please specify BioPortal ontology acronyms you would like to restrict the download to (leave empty to download mappings for all ontologies):");
+					"Please specify BioPortal ontology acronyms, separated by whitespace, you would like to restrict the download to (leave empty to download mappings for all ontologies):");
 			if (input.trim().length() > 0)
 				mappingsDownloadRestriction = input.trim().split("\\s+");
 		}
-		convert = BioPortalToolUtils.readYesNoFromStdInWithMessage(
-				"Do you wish to convert all ontologies into a common OWL format?", true);
-		importOntologies = BioPortalToolUtils.readYesNoFromStdInWithMessage(
-				"Do you wish to import all ontologies into the database?", true);
-		
+		convert = BioPortalToolUtils
+				.readYesNoFromStdInWithMessage("Do you wish to convert all ontologies into a common OWL format?", true);
+		importOntologies = BioPortalToolUtils
+				.readYesNoFromStdInWithMessage("Do you wish to import all ontologies into the database?", true);
+
 		Properties config = new Properties();
 		config.load(JoyceApplication.class.getResourceAsStream("/configuration.properties.template"));
 		config.setProperty(BIOPORTAL_API_KEY, apikey);
 		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES, String.valueOf(downloadOntologies));
-		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD, Stream.of(ontoDownloadRestriction).collect(Collectors.joining(",")));
+		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD,
+				Stream.of(ontoDownloadRestriction).collect(Collectors.joining(",")));
 		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS, String.valueOf(downloadOntologies));
-		config.setProperty(MAPPINGS_FOR_DOWNLOAD, Stream.of(mappingsDownloadRestriction).collect(Collectors.joining(",")));
+		config.setProperty(MAPPINGS_FOR_DOWNLOAD,
+				Stream.of(mappingsDownloadRestriction).collect(Collectors.joining(",")));
 		config.setProperty(SETUP_CONVERT_TO_OWL, String.valueOf(convert));
 		config.setProperty(SETUP_IMPORT_ONTOLOGIES, String.valueOf(importOntologies));
-		
-		String configFilename = BioPortalToolUtils.readLineFromStdInWithMessage("Where would you like to store the configuration file?", "configuration.properties");
-		
+
+		String configFilename = BioPortalToolUtils.readLineFromStdInWithMessage(
+				"Where would you like to store the configuration file?", "configuration.properties");
+
 		try (Writer w = new BufferedWriter(new FileWriter(configFilename))) {
-			config.store(w, "This is a JOYCE configuration file.\nExplanations for all configuration symbols can be found in the JavaDocs of\njcore-base:de.aquadiva.joyce.JoyceSymbolConstants");
+			config.store(w,
+					"This is a JOYCE configuration file.\nExplanations for all configuration symbols can be found in the JavaDocs of\njcore-base:de.aquadiva.joyce.JoyceSymbolConstants");
 		}
+
+		return configFilename;
 	}
 
 }
