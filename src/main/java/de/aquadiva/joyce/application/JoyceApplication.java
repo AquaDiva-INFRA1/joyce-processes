@@ -17,7 +17,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -191,11 +190,11 @@ public class JoyceApplication {
 		config.load(JoyceApplication.class.getResourceAsStream("/configuration.properties.template"));
 		config.setProperty(BIOPORTAL_API_KEY, apikey);
 		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES, String.valueOf(downloadOntologies));
-		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD,
-				Stream.of(ontoDownloadRestriction).collect(Collectors.joining(",")));
+		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD, ontoDownloadRestriction != null
+				? Stream.of(ontoDownloadRestriction).collect(Collectors.joining(",")) : "");
 		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS, String.valueOf(downloadOntologies));
-		config.setProperty(MAPPINGS_FOR_DOWNLOAD,
-				Stream.of(mappingsDownloadRestriction).collect(Collectors.joining(",")));
+		config.setProperty(MAPPINGS_FOR_DOWNLOAD, mappingsDownloadRestriction != null
+				? Stream.of(mappingsDownloadRestriction).collect(Collectors.joining(",")) : "");
 		config.setProperty(SETUP_CONVERT_TO_OWL, String.valueOf(convert));
 		config.setProperty(SETUP_IMPORT_ONTOLOGIES, String.valueOf(importOntologies));
 

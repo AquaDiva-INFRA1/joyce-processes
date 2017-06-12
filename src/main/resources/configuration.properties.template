@@ -27,11 +27,13 @@ joyce.mappings.download.acronyms=
 # ----- Setup Output Resources -----
 joyce.ontologies.modules.concepts.mixedclassontologymapping=resources/classontologymapping.tsv.gz
 joyce.ontologies.dictionary.filtered.path=resources/bioportalTerms.filtered.dict.gz
+joyce.ontologies.classes.names.dir=resources/classnames
 joyce.setup.errors.file=ERRORS_SETUP.txt
-joyce.ontologies.download.errors.file=ERRORS_DOWNLOAD.txt
-joyce.ontologies.downloaddir=ontology-download/ontologies
-joyce.ontologies.info.downloaddir=ontology-download/info
+joyce.ontologies.download.errors.file=ontology-download/ERRORS_ONTOLOGY_DOWNLOAD.txt
+joyce.ontologies.download.dir=ontology-download/ontologies
+joyce.ontologies.info.download.dir=ontology-download/info
 joyce.ontologies.owl.dir=ontology-download/owl
+joyce.mappings.download.dir=ontology-download/mappings
 
 # ------ Ontology or Module Selection Settings ------
 

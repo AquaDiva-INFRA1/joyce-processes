@@ -41,9 +41,11 @@ import de.aquadiva.joyce.base.services.IOWLParsingService;
 import de.aquadiva.joyce.base.services.IOntologyDBService;
 import de.aquadiva.joyce.base.services.IOntologyDownloadService;
 import de.aquadiva.joyce.base.services.IOntologyFormatConversionService;
+import de.aquadiva.joyce.base.services.IOntologyNameExtractionService;
 import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
 import de.aquadiva.joyce.core.services.IOntologyModularizationService;
 import de.aquadiva.joyce.util.OntologyModularizationException;
+import de.julielab.bioportal.ontologies.OntologyClassNameExtractor;
 
 /**
  * Sets up the environment for ontology module selection.<br/>
@@ -119,7 +121,7 @@ public class SetupService implements ISetupService {
 	private IOntologyFormatConversionService formatConversionService;
 	private IOntologyDBService dbService;
 	private IConstantOntologyScorer constantScoringChain;
-	private boolean doDownload;
+	private boolean downloadOntologies;
 	private File mixedClassOntologyMappingFile;
 	private String[] requestedAcronyms;
 	private IOWLParsingService owlParsingService;
@@ -131,12 +133,16 @@ public class SetupService implements ISetupService {
 	private IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService;
 	private boolean doImport;
 	private ExecutorService executorService;
+	private boolean downloadMappings;
+	private IOntologyNameExtractionService classNameExtractionService;
 
 	public SetupService(Logger log, IOntologyDownloadService downloadService,
 			IOntologyFormatConversionService formatConversionService, IOntologyDBService dbService,
 			IOntologyModularizationService modularizationService, IOWLParsingService owlParsingService,
+			IOntologyNameExtractionService classNameExtractionService,
 			IMetaConceptService metaConceptService, @ConstantScoringChain IConstantOntologyScorer constantScoringChain,
-			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES) boolean doDownload,
+			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES) boolean downloadOntologies,
+			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS) boolean downloadMappings,
 			@Symbol(JoyceSymbolConstants.SETUP_CONVERT_TO_OWL) boolean doConvert,
 			@Symbol(JoyceSymbolConstants.SETUP_IMPORT_ONTOLOGIES) boolean doImport,
 			@Symbol(JoyceSymbolConstants.SETUP_ERROR_FILE) File errorFile,
@@ -152,9 +158,11 @@ public class SetupService implements ISetupService {
 		this.dbService = dbService;
 		this.modularizationService = modularizationService;
 		this.owlParsingService = owlParsingService;
+		this.classNameExtractionService = classNameExtractionService;
 		this.metaConceptService = metaConceptService;
 		this.constantScoringChain = constantScoringChain;
-		this.doDownload = doDownload;
+		this.downloadOntologies = downloadOntologies;
+		this.downloadMappings = downloadMappings;
 		this.doConvert = doConvert;
 		this.doImport = doImport;
 		this.errorFile = errorFile;
@@ -175,17 +183,26 @@ public class SetupService implements ISetupService {
 		if (errorFile.exists())
 			errorFile.delete();
 
-		if (doDownload) {
+		if (downloadOntologies) {
 			log.info("Downloading ontologies from BioPortal...");
 			downloadService.downloadBioPortalOntologiesToConfigDirs(requestedAcronyms);
 		} else {
 			log.info(
-					"Ontology downloading is switched off, system will be set up using existing ontology files on disc.");
+					"Ontology download is switched off, system will be set up using existing ontology files on disc.");
+		}
+		if (downloadMappings) {
+			log.info("Downloading mappings from BioPortal...");
+			downloadService.downloadBioPortalMappingsToConfigDirs(requestedAcronyms);
+		} else {
+			log.info(
+					"Mapping download is switched off, system will be set up using existing mapping files on disc.");
 		}
 		if (doConvert) {
 			log.info("Converting downladed ontologies to OWL format where possible.");
 			formatConversionService.convertFromDownloadDirToOwlDir();
 		}
+		log.info("Extracting ontology class names...");
+		classNameExtractionService.extractNames();
 		List<Ontology> ontologies;
 		if (doImport) {
 			log.info("Importing downloaded ontologies into the database...");
