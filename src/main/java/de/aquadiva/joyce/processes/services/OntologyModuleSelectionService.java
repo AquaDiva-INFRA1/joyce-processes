@@ -224,20 +224,26 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		log.info("Starting module selection process.");
 		// owlParsingService.reset();
 
-		// find concepts for the input terms
+		/*
+		 *  Identify all concepts that match to the input terms (e.g. by comparing erm and concept label).
+		 */
 		log.debug("Finding concepts in input text {}", text);
 		Multiset<String> mixedClassesInText = taggingService.findConcepts(text);
 		if (mixedClassesInText.isEmpty()) {
 			log.info("No concept names were found in the input text.");
 			return Collections.emptyList();
 		}
+		
 		Set<String> iriClassesInText = metaConceptService.convertMixedClassesToIriClasses(mixedClassesInText);
 		if (iriClassesInText.isEmpty())
 			throw new IllegalStateException(
 					"Concept names - possibly aggregates - were found in the input text and concept IDs were received but the conversion to pure class IRIs did return an empty result. Inconsistent data.");
 
 		log.info("Extracted concept IDs from input text: {}", mixedClassesInText);
-		// get the ids of all modules that contain at least one input concept
+		
+		/*
+		 *  Retrieve the IDs of all modules/ontologies that contain at least one of the concepts that match to an input term.
+		 */
 		Multiset<String> moduleIds = metaConceptService.getOntologiesForMixedClasses(mixedClassesInText);
 
 		if (moduleIds.isEmpty())
@@ -245,24 +251,35 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 					"Concept names were found in the input text but no ontologies containing those concepts were found in the mapping file.");
 
 		log.debug("Module IDs containing extracted concepts: {}", moduleIds);
-		// score these ontologies w.r.t. the defined scorers
-		// and create an ontology set, which contains that ontology/module
-		// and create a list of existing ontologies
+		
+		/*
+		 *  For all modules/ontologies with matching concepts:
+		 *  (1) Create an OntologySet comprising just the single module/ontology.
+		 *  (2) Score these ontologies and the resulting OntologySets w.r.t. the defined scorers (e.g. term coverage and overlap).
+		 *  (3) Filter out ontologies that do not contain matching concepts and/or whose scores do not exceed a certain threshold value.
+		 *  
+		 *  Store all remaining ontologies in ArrayList<Ontology> ontologies and their corresponding single-ontology-sets in ArrayList<OntologySet> initialCandidateSet.
+		 */
 		ArrayList<OntologySet> initialCandidateSet = new ArrayList<OntologySet>();
 		ArrayList<Ontology> ontologies = new ArrayList<>();
 
 		// Batch-preloading for performance improvement
 		String[] array = moduleIds.elementSet().toArray(new String[moduleIds.elementSet().size()]);
+		
 		log.info("Getting all module IDs from database: {}", Arrays.toString(array));
 		List<Ontology> allOntologies = dbService.getOntologiesByIds(array);
 		for (Ontology o : allOntologies)
 			System.out.println(o.getId());
+		
 		if (allOntologies.size() != moduleIds.elementSet().size())
 			throw new IllegalStateException(
 					"Concepts were found in the input text for " + moduleIds.elementSet().size() + " ontologies or modules but "
 							+ allOntologies.size() + " ontologies or modules were returned from the database.");
+		
 		Set<Ontology> ontologiesToScore = new HashSet<>();
 		List<Future<Ontology>> localityModules = new ArrayList<>();
+		
+		// get the modules/ontologies to score, thereby handling the different types of semantic resources to assemble (entire ontologies, partitioning-based ontology modules and extraction-based ontology modules)
 		for (Ontology o : allOntologies) {
 			if (params.selectionType == SelectionParameters.SelectionType.ONTOLOGY)
 				ontologiesToScore.add(getSourceOntology(o));
@@ -273,6 +290,7 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 				localityModules.add(executorService.submit(new LocalityModuleExtractionWorker(o, iriClassesInText)));
 			}
 		}
+		
 		for (int i = 0; i < localityModules.size(); ++i) {
 			Future<Ontology> localityModuleFuture = localityModules.get(i);
 			try {
@@ -282,6 +300,8 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 				e.printStackTrace();
 			}
 		}
+		
+		// score the modules/ontologies
 		log.info("Final ontology or module IDs: {}", ontologiesToScore);
 
 		if (ontologiesToScore.isEmpty()) {
@@ -308,6 +328,7 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		}
 		log.info("Copying of {} ontologies took {}ms", scoredOntologies.size(), copyTime);
 
+		// preprocess modules/ontologies
 		log.info("Preprocessing modules ... ");
 		double bestCoverageSoFar = 0.0;
 		for (Future<Ontology> ontologyFuture : scoredOntologies) {
@@ -319,8 +340,7 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 			}
 
 			// filter out certain ontologies/modules that do not exceed the
-			// given
-			// thresholds for the constant scores
+			// given thresholds for the constant scores
 			boolean filterOut = false;
 			for (ScoreType t : CONSTANT_SCORES_THRESHOLDS.keySet()) {
 				if (o.getScore(t) < CONSTANT_SCORES_THRESHOLDS.get(t)) {
@@ -330,6 +350,7 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 				}
 			}
 
+			// go on with the modules/ontologies that passed the filter
 			if (!filterOut) {
 				log.debug("Module passed filter " + o);
 
@@ -337,15 +358,20 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 				ontologies.add(o);
 				log.info("The scores of " + o.getId() + ": " + o.getScores());
 
-				// create an ontology set, which contains that ontology/module
+				// create an ontology set, which contains that ontology/module and ...
 				OntologySet s = new OntologySet();
 				HashSet<IOntology> containedOntologies = new HashSet<IOntology>();
 				containedOntologies.add(o);
 				s.setOntologies(containedOntologies);
+				
+				//  ... score it
 				variableScoringChain.score(s, mixedClassesInText);
-				// constantScoringChain.score(s); //UNCOMMENT, IF constant
-				// scores shall be considered again
+				// constantScoringChain.score(s); //UNCOMMENT, IF constant scores shall be considered again
+				
+				// add it to the set of candidate OntologySets and ...
 				initialCandidateSet.add(s);
+				
+				// ... determine the highest coverage value encountered
 				bestCoverageSoFar = Math.max(bestCoverageSoFar, s.getScore(ScoreType.TERM_COVERAGE));
 				log.info("best coverage so far " + bestCoverageSoFar);
 				log.debug("Created an ontology set and scored it " + o);
@@ -353,10 +379,16 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 
 		}
 
-		// find the best modules
+		/*
+		 *  Identify the optimal candidates.
+		 */
 		List<OntologySet> result = determineOptimalSets(initialCandidateSet, ontologies, params,
 				expandPreferences(params.preferences), 1, mixedClassesInText, bestCoverageSoFar);
 
+		/*
+		 * Sort the the optimal candidates by the criterion (ScoreType) that is most important to the user and return them.
+		 */
+		
 		// find most important criterion
 		ScoreType mostImpCriterion = null;
 		int maximalPreference = 0;
@@ -399,12 +431,13 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 	 * Recursively determines a set of pareto-optimal combinations of
 	 * ontologies/modules with respect to the given score types and preferences.
 	 * 
-	 * @param candidates
-	 * @param ontologies
-	 * @param scoreTypes
-	 * @param expandedPreferences
-	 * @param currentElementsPerSet
-	 * @param concepts
+	 * @param candidates	the candidate ontology sets
+	 * @param ontologies	the list of ontologies that may be added to ontology sets
+	 * @param scoreTypes	the score types to optimize
+	 * @param expandedPreferences	the preferences of the user w.r.t. the ScoreTypes (all equivalent representations of this preference)
+	 * @param currentElementsPerSet	current number of ontologies per OntologySet
+	 * @param concepts	the concepts that match to the input terms
+	 * @param bestCoverageSoFar	the highest coverage value encountered so far
 	 * @return
 	 */
 	private List<OntologySet> determineOptimalSets(List<OntologySet> candidates, List<Ontology> ontologies,
@@ -432,7 +465,7 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		log.debug("bestCoverageSoFar: " + bestCoverageSoFar);
 
 		/**
-		 * determine the pareto-optimal candidates sets out of the input
+		 * determine the pareto-optimal candidate sets out of the input
 		 * candidate sets
 		 */
 		log.info("Before Skyline");
@@ -475,20 +508,23 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 			}
 
 			// for each type, divide the scores into subspaces
+			// get the subspace borders
 			ArrayList<double[]> subspaceBorders = getSubspaceBorders((List) nonSkylineOntologiesSets,
 					params.scoreTypesToConsider, scoresByType);
 
-			// get subspace elements
+			// create the subspace matrix and fill it with the candidate ontologies
 			ElementMatrix subspaces = new ElementMatrix(subspaceBorders, params.scoreTypesToConsider);
 			for (OntologySet s : nonSkylineOntologiesSets) {
 				subspaces.addElement(s);
 			}
 
+			// get the candidate ontology sets that fit the user's preferences from the subspace matrix
 			HashSet<OntologySet> selectedCandidates = new HashSet<OntologySet>();
 			for (int[] pref : expandedPreferences) {
 				selectedCandidates.addAll(subspaces.getSubspaceElements(pref));
 			}
 
+			// take a random sample of size sampleSize from the candidates			
 			List<OntologySet> selectedCandidatesList = new ArrayList<>(selectedCandidates);
 			Collections.shuffle(selectedCandidatesList, new Random(System.currentTimeMillis()));
 			// int sampleSize = 50;
@@ -505,15 +541,9 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		 */
 		// get the scores of the candidates separated by type
 		log.info("get the scores of the candidates separated by type");
-		ArrayList<double[]> scoresByType = new ArrayList<double[]>(); // the
-																		// scores
-																		// of
-																		// all
-																		// candidates
-																		// separated
-																		// by
-																		// score
-																		// type
+		// the scores of all candidates separated by score type
+		ArrayList<double[]> scoresByType = new ArrayList<double[]>();
+		
 		for (ScoreType type : params.scoreTypesToConsider) {
 			scoresByType.add(new double[optimalCandidates.size()]);
 		}
@@ -674,10 +704,10 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 	 * left, d10 right, d11 -left, d11 - right, d12 - left, d12 - right], [d20
 	 * left, d20 right, d21 -left, d21 - right, d22 - left, d22 - right] }.
 	 * 
-	 * @param candidates
-	 * @param scoreTypes
-	 * @param scoresByType
-	 * @return the borders of the subspaces for each dimension
+	 * @param candidates	the scored candidate ontology sets
+	 * @param scoreTypes	the ScoreTypes for which scores are available, e.g. coverage, overhead and overlap
+	 * @param scoresByType	the scores of the candidate ontology sets by ScoreType
+	 * @return the borders of the subspaces for each dimension (ScoreType)
 	 */
 	private static ArrayList<double[]> getSubspaceBorders(List<OntologySet> candidates, ScoreType[] scoreTypes,
 			ArrayList<double[]> scoresByType) {
@@ -690,6 +720,37 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 			if (scoresByType.size() != scoreTypes.length)
 				return null;
 
+			/*
+			BASIC IDEA: For each ScoreType, we sort the scores of the candidate ontology sets and split them into as many intervals as 				ScoreTypes have been scored.
+
+			Example: with 3 ScoreTypes and 10 candidate ontology sets
+
+			candidates.size() = 10
+			scoreTypes = [TERM_COVERAGE,CLASS_OVERHEAD,CLASS_OVERLAP]
+			scoresByType = [
+					[ 50.1, 30.4, 60.5, 90.7, 60.3, 30.5, 20.9, 45.3, 56.5, 78.1 ], //coverage scores for the 10 candidates
+					[ 67.5, 40.6, 19.9, 89.0, 25.6, 83.7, 91.6, 23.7, 93.6, 44.2 ], //overhead scores for the 10 candidates
+					[ 22.6, 98.7, 11.7, 67.9, 34.6, 22.8, 45.3, 77.5, 53.4, 23.6 ]  //overlap scores for the 10 candidates
+				       ]
+			
+			We have 3 ScoreTypes, so the sorted scores for each of the ScoreTypes is split into 3 intervals. For instance, for coverage we 				get the following sorted array of coverage scores
+
+			[ 20.9, 30.4, 30.5, 45.3, 50.1, 56.5, 60.3, 60.5, 78.1, 90.7 ].
+
+			We split it into the 3 subintervals
+
+			[ 20.9, 30.4, 30.5 ], [ 45.3, 50.1, 56.5 ] and [ 60.3, 60.5, 78.1, 90.7 ].
+
+			For each ScoreType, we return the borders of these intervals, i.e. for coverage, we would return [ 20.9, 30.5, 45.3, 56.5, 60.3 and 90.7 ].	
+			*/
+			
+			/* 
+			DETERMINE THE INDICES OF THE INTERVALS' BORDER ELEMENTS
+			
+			Based on the number of candidate ontologies and the number of ScoreTypes, determine the indices of the interval border 				elements in the sorted score arrays.
+
+			Example: For 10 candidates and 3 ScoreTypes, we would get subspaceIndices = [ 0, 2, 3, 5, 6, 9 ], i.e. the index of the left 				border element of the first interval is 0, the index of the right border element of the first interval is 2.
+			*/
 			int[] subspaceIndices = new int[2 * scoreTypes.length];
 
 			for (int i = 0; i < scoreTypes.length; i++) {
@@ -712,27 +773,32 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 				}
 			}
 
-			ArrayList<double[]> subspacesByType = new ArrayList<double[]>(); // the
-																				// subspaces
-																				// of
-																				// the
-																				// candidate
-																				// scores
-																				// separated
-																				// by
-																				// score
-																				// type
+			/*
+			DETERMINE THE BORDER ELEMENTS OF THE SUBINTERVALS FOR EACH SCORETYPE
+			*/
+
+			// the border elements of the candidate scores separated by ScoreType
+			ArrayList<double[]> subspacesByType = new ArrayList<double[]>();
+	
+			//for each ScoreType
 			for (int i = 0; i < scoresByType.size(); i++) {
+
+				// sort the scores
 				double[] scores = scoresByType.get(i);
 				Arrays.sort(scores);
+
+				// determine the border elements of each subinterval and add them to subspaces
 				double[] subspaces = new double[2 * scoreTypes.length];
 				for (int j = 0; j < subspaceIndices.length; j++) {
 					subspaces[j] = scores[subspaceIndices[j]];
 				}
+
+				// add the subspace element for the considered ScoreType to subspacesByType
 				subspacesByType.add(i, subspaces);
 			}
 
 			return subspacesByType;
+
 		} else {
 			return null;
 		}
