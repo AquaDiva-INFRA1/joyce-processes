@@ -2,6 +2,8 @@ package de.aquadiva.joyce.processes.services;
 
 import java.io.IOException;
 
+import de.aquadiva.joyce.base.util.JoyceException;
+
 public interface ISetupService {
 	/**
 	 * Downloads ontologies from BioPortal, does the modularization, constant
@@ -11,6 +13,7 @@ public interface ISetupService {
 	 * @throws IOException
 	 *             If the writing of the class Id to module Id mapping file was
 	 *             not successful.
+	 * @throws JoyceException 
 	 */
-	void setupSelectionSystem() throws IOException;
+	void setupSelectionSystem() throws IOException, JoyceException;
 }

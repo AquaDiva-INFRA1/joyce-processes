@@ -43,6 +43,8 @@ import de.aquadiva.joyce.base.services.IOntologyDownloadService;
 import de.aquadiva.joyce.base.services.IOntologyFormatConversionService;
 import de.aquadiva.joyce.base.services.IOntologyNameExtractionService;
 import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
+import de.aquadiva.joyce.base.util.JoyceException;
+import de.aquadiva.joyce.base.util.MetaConceptMapCreationException;
 import de.aquadiva.joyce.core.services.IOntologyModularizationService;
 import de.aquadiva.joyce.util.OntologyModularizationException;
 import de.julielab.bioportal.ontologies.OntologyClassNameExtractor;
@@ -179,7 +181,7 @@ public class SetupService implements ISetupService {
 	}
 
 	@Override
-	public void setupSelectionSystem() throws IOException {
+	public void setupSelectionSystem() throws IOException, JoyceException {
 		if (errorFile.exists())
 			errorFile.delete();
 
@@ -210,11 +212,15 @@ public class SetupService implements ISetupService {
 		} else {
 			ontologies = dbService.getAllOntologies();
 		}
+
+		// TODO create the (mixed)class mappings
+		metaConceptService.createMetaConceptMap();
+		System.exit(1);
 		log.debug(
 				"Reading the mapping that maps class IRIs to meta class IDs so we can set meta classes to ontologies and modules");
 		Multimap<String, String> mixedClassToModuleMapping = HashMultimap.create();
-
 		Map<String, Future<List<OntologyModule>>> ontologyModules = new HashMap<>();
+	
 		// unfortunately, it seems the modularization is not thread safe...
 		// thus, the above map is not actually used
 //		log.info("Modularizing ontologies concurrently");
@@ -223,6 +229,7 @@ public class SetupService implements ISetupService {
 //			Future<List<OntologyModule>> modulesFuture = executorService.submit(worker);
 //			ontologyModules.put(o.getId(), modulesFuture);
 //		}
+		
 
 		SetupStats stats = new SetupStats();
 		// For ontology scoring

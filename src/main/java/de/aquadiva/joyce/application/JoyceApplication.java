@@ -35,6 +35,7 @@ import de.aquadiva.joyce.base.data.IOntology;
 import de.aquadiva.joyce.base.data.InfoType;
 import de.aquadiva.joyce.base.data.OntologySet;
 import de.aquadiva.joyce.base.data.ScoreType;
+import de.aquadiva.joyce.base.util.JoyceException;
 import de.aquadiva.joyce.processes.services.IOntologyModuleSelectionService;
 import de.aquadiva.joyce.processes.services.ISetupService;
 import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
@@ -52,7 +53,7 @@ public class JoyceApplication {
 
 	private static Logger log = LoggerFactory.getLogger(JoyceApplication.class);
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, JoyceException {
 		if (args.length == 0) {
 			System.err.println("Select from the following modes:");
 			System.err.println("-s setup");
