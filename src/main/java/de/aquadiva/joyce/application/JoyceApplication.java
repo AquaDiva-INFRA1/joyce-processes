@@ -1,8 +1,14 @@
 package de.aquadiva.joyce.application;
 
 import static de.aquadiva.joyce.JoyceSymbolConstants.BIOPORTAL_API_KEY;
+import static de.aquadiva.joyce.JoyceSymbolConstants.MAPPINGS_DOWNLOAD_DIR;
 import static de.aquadiva.joyce.JoyceSymbolConstants.MAPPINGS_FOR_DOWNLOAD;
+import static de.aquadiva.joyce.JoyceSymbolConstants.NEO4J_PATH;
+import static de.aquadiva.joyce.JoyceSymbolConstants.ONTOLOGIES_DOWNLOAD_DIR;
 import static de.aquadiva.joyce.JoyceSymbolConstants.ONTOLOGIES_FOR_DOWNLOAD;
+import static de.aquadiva.joyce.JoyceSymbolConstants.ONTOLOGY_CLASSES_NAMES_DIR;
+import static de.aquadiva.joyce.JoyceSymbolConstants.ONTOLOGY_INFO_DOWNLOAD_DIR;
+import static de.aquadiva.joyce.JoyceSymbolConstants.OWL_DIR;
 import static de.aquadiva.joyce.JoyceSymbolConstants.SETUP_CONVERT_TO_OWL;
 import static de.aquadiva.joyce.JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS;
 import static de.aquadiva.joyce.JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES;
@@ -20,6 +26,8 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,6 +37,8 @@ import org.apache.tapestry5.ioc.Registry;
 import org.apache.tapestry5.ioc.RegistryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.aliasi.util.Files;
 
 import de.aquadiva.joyce.JoyceSymbolConstants;
 import de.aquadiva.joyce.base.data.IOntology;
@@ -173,34 +183,61 @@ public class JoyceApplication {
 			if (input.trim().length() > 0)
 				ontoDownloadRestriction = input.trim().split("\\s+");
 		}
-		downloadMappings = readYesNoFromStdInWithMessage("Do you wish to download ontology mappings from BioPortal?", true);
+		downloadMappings = readYesNoFromStdInWithMessage("Do you wish to download ontology mappings from BioPortal?",
+				true);
 		if (downloadMappings) {
 			String input = readLineFromStdInWithMessage(
 					"Please specify BioPortal ontology acronyms, separated by whitespace, you would like to restrict the download to (leave empty to download mappings for all ontologies):");
 			if (input.trim().length() > 0)
 				mappingsDownloadRestriction = input.trim().split("\\s+");
 		}
-		convert = readYesNoFromStdInWithMessage("Do you wish to convert all ontologies into a common OWL format?", true);
-		importOntologies = readYesNoFromStdInWithMessage("Do you wish to import all ontologies into the database?", true);
+		convert = readYesNoFromStdInWithMessage("Do you wish to convert all ontologies into a common OWL format?",
+				true);
+		importOntologies = readYesNoFromStdInWithMessage("Do you wish to import all ontologies into the database?",
+				true);
 
 		Properties config = new Properties();
 		config.load(JoyceApplication.class.getResourceAsStream("/configuration.properties.template"));
 		config.setProperty(BIOPORTAL_API_KEY, apikey);
 		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES, String.valueOf(downloadOntologies));
-		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD, ontoDownloadRestriction != null
-				? Stream.of(ontoDownloadRestriction).collect(Collectors.joining(",")) : "");
+		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD,
+				ontoDownloadRestriction != null ? Stream.of(ontoDownloadRestriction).collect(Collectors.joining(","))
+						: "");
 		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS, String.valueOf(downloadOntologies));
-		config.setProperty(MAPPINGS_FOR_DOWNLOAD, mappingsDownloadRestriction != null
-				? Stream.of(mappingsDownloadRestriction).collect(Collectors.joining(",")) : "");
+		config.setProperty(MAPPINGS_FOR_DOWNLOAD,
+				mappingsDownloadRestriction != null
+						? Stream.of(mappingsDownloadRestriction).collect(Collectors.joining(","))
+						: "");
 		config.setProperty(SETUP_CONVERT_TO_OWL, String.valueOf(convert));
 		config.setProperty(SETUP_IMPORT_ONTOLOGIES, String.valueOf(importOntologies));
 
-		String configFilename = readLineFromStdInWithMessage(
-				"Where would you like to store the configuration file?", "configuration.properties");
+		String configFilename = readLineFromStdInWithMessage("Where would you like to store the configuration file?",
+				"configuration.properties");
 
 		try (Writer w = new BufferedWriter(new FileWriter(configFilename))) {
 			config.store(w,
 					"This is a JOYCE configuration file.\nExplanations for all configuration symbols can be found in the JavaDocs of\njcore-base:de.aquadiva.joyce.JoyceSymbolConstants");
+		}
+
+		// Gets a configuration value as a file instance
+		Function<String, File> gf = s -> new File(config.getProperty(s));
+		// The following function checks whether a given file name exists
+		Function<String, Boolean> f = s -> gf.apply(s).exists();
+		if (f.apply(ONTOLOGIES_DOWNLOAD_DIR) || f.apply(ONTOLOGY_INFO_DOWNLOAD_DIR) || f.apply(MAPPINGS_DOWNLOAD_DIR)
+				|| f.apply(ONTOLOGY_CLASSES_NAMES_DIR) || f.apply(NEO4J_PATH) || f.apply(OWL_DIR)) {
+			Consumer<String> delete = s -> {
+				if (f.apply(s))
+					Files.removeRecursive(gf.apply(s));
+			};
+			if (readYesNoFromStdInWithMessage(
+					"There is already ontology or mapping data downloaded or derived from downloads. Should existing data be removed?")) {
+				delete.accept(ONTOLOGIES_DOWNLOAD_DIR);
+				delete.accept(ONTOLOGY_INFO_DOWNLOAD_DIR);
+				delete.accept(MAPPINGS_DOWNLOAD_DIR);
+				delete.accept(ONTOLOGY_CLASSES_NAMES_DIR);
+				delete.accept(NEO4J_PATH);
+				delete.accept(OWL_DIR);
+			}
 		}
 
 		return configFilename;

@@ -25,6 +25,7 @@ joyce.mappings.download.acronyms=
 
 
 # ----- Setup Output Resources -----
+joyce.ontologies.neo4j.path=resources/graphdb
 joyce.ontologies.modules.concepts.mixedclassontologymapping=resources/classontologymapping.tsv.gz
 joyce.ontologies.dictionary.filtered.path=resources/bioportalTerms.filtered.dict.gz
 joyce.ontologies.classes.names.dir=resources/classnames

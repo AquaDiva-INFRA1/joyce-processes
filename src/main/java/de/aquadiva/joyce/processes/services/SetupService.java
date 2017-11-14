@@ -14,11 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -37,6 +34,7 @@ import de.aquadiva.joyce.base.data.Ontology;
 import de.aquadiva.joyce.base.data.OntologyModule;
 import de.aquadiva.joyce.base.services.IConstantOntologyScorer;
 import de.aquadiva.joyce.base.services.IMetaConceptService;
+import de.aquadiva.joyce.base.services.INeo4jService;
 import de.aquadiva.joyce.base.services.IOWLParsingService;
 import de.aquadiva.joyce.base.services.IOntologyDBService;
 import de.aquadiva.joyce.base.services.IOntologyDownloadService;
@@ -44,10 +42,8 @@ import de.aquadiva.joyce.base.services.IOntologyFormatConversionService;
 import de.aquadiva.joyce.base.services.IOntologyNameExtractionService;
 import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
 import de.aquadiva.joyce.base.util.JoyceException;
-import de.aquadiva.joyce.base.util.MetaConceptMapCreationException;
 import de.aquadiva.joyce.core.services.IOntologyModularizationService;
 import de.aquadiva.joyce.util.OntologyModularizationException;
-import de.julielab.bioportal.ontologies.OntologyClassNameExtractor;
 
 /**
  * Sets up the environment for ontology module selection.<br/>
@@ -137,12 +133,13 @@ public class SetupService implements ISetupService {
 	private ExecutorService executorService;
 	private boolean downloadMappings;
 	private IOntologyNameExtractionService classNameExtractionService;
+	private INeo4jService neo4jService;
 
 	public SetupService(Logger log, IOntologyDownloadService downloadService,
 			IOntologyFormatConversionService formatConversionService, IOntologyDBService dbService,
 			IOntologyModularizationService modularizationService, IOWLParsingService owlParsingService,
-			IOntologyNameExtractionService classNameExtractionService,
-			IMetaConceptService metaConceptService, @ConstantScoringChain IConstantOntologyScorer constantScoringChain,
+			IOntologyNameExtractionService classNameExtractionService, IMetaConceptService metaConceptService,
+			INeo4jService neo4jService, @ConstantScoringChain IConstantOntologyScorer constantScoringChain,
 			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES) boolean downloadOntologies,
 			@Symbol(JoyceSymbolConstants.SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS) boolean downloadMappings,
 			@Symbol(JoyceSymbolConstants.SETUP_CONVERT_TO_OWL) boolean doConvert,
@@ -162,6 +159,7 @@ public class SetupService implements ISetupService {
 		this.owlParsingService = owlParsingService;
 		this.classNameExtractionService = classNameExtractionService;
 		this.metaConceptService = metaConceptService;
+		this.neo4jService = neo4jService;
 		this.constantScoringChain = constantScoringChain;
 		this.downloadOntologies = downloadOntologies;
 		this.downloadMappings = downloadMappings;
@@ -173,7 +171,8 @@ public class SetupService implements ISetupService {
 		this.ontologyRepositoryStatsPrinterService = ontologyRepositoryStatsPrinterService;
 		this.executorService = executorService;
 		this.mixedClassOntologyMappingFile = classOntologyMappingFile.endsWith(".gz")
-				? new File(classOntologyMappingFile) : new File(classOntologyMappingFile + ".gz");
+				? new File(classOntologyMappingFile)
+				: new File(classOntologyMappingFile + ".gz");
 		if (!StringUtils.isBlank(requestedAcronyms))
 			this.requestedAcronyms = requestedAcronyms.split(",");
 		else
@@ -189,15 +188,13 @@ public class SetupService implements ISetupService {
 			log.info("Downloading ontologies from BioPortal...");
 			downloadService.downloadBioPortalOntologiesToConfigDirs(requestedAcronyms);
 		} else {
-			log.info(
-					"Ontology download is switched off, system will be set up using existing ontology files on disc.");
+			log.info("Ontology download is switched off, system will be set up using existing ontology files on disc.");
 		}
 		if (downloadMappings) {
 			log.info("Downloading mappings from BioPortal...");
 			downloadService.downloadBioPortalMappingsToConfigDirs(requestedAcronyms);
 		} else {
-			log.info(
-					"Mapping download is switched off, system will be set up using existing mapping files on disc.");
+			log.info("Mapping download is switched off, system will be set up using existing mapping files on disc.");
 		}
 		if (doConvert) {
 			log.info("Converting downladed ontologies to OWL format where possible.");
@@ -212,25 +209,29 @@ public class SetupService implements ISetupService {
 		} else {
 			ontologies = dbService.getAllOntologies();
 		}
+		log.debug("There are {} ontologies in the database that will now be prepared for selection requirements.",
+				ontologies.size());
 
-		// TODO create the (mixed)class mappings
-		metaConceptService.createMetaConceptMap();
-		System.exit(1);
-		log.debug(
-				"Reading the mapping that maps class IRIs to meta class IDs so we can set meta classes to ontologies and modules");
-		Multimap<String, String> mixedClassToModuleMapping = HashMultimap.create();
-		Map<String, Future<List<OntologyModule>>> ontologyModules = new HashMap<>();
-	
+		neo4jService.insertClasses();
+		neo4jService.insertMappings();
+		neo4jService.createMetaClassesInDatabase();
+		neo4jService.exportMetaClassToIriMappingFile();
+		neo4jService.exportLingpipeDictionary();
+
+		metaConceptService.loadMetaClassIriMaps();
+
 		// unfortunately, it seems the modularization is not thread safe...
 		// thus, the above map is not actually used
-//		log.info("Modularizing ontologies concurrently");
-//		for (Ontology o : ontologies) {
-//			ModularizationWorker worker = new ModularizationWorker(o);
-//			Future<List<OntologyModule>> modulesFuture = executorService.submit(worker);
-//			ontologyModules.put(o.getId(), modulesFuture);
-//		}
-		
+		// log.info("Modularizing ontologies concurrently");
+		// for (Ontology o : ontologies) {
+		// ModularizationWorker worker = new ModularizationWorker(o);
+		// Future<List<OntologyModule>> modulesFuture =
+		// executorService.submit(worker);
+		// ontologyModules.put(o.getId(), modulesFuture);
+		// }
 
+		Multimap<String, String> mixedClassToModuleMapping = HashMultimap.create();
+		Map<String, Future<List<OntologyModule>>> ontologyModules = new HashMap<>();
 		SetupStats stats = new SetupStats();
 		// For ontology scoring
 		for (Ontology o : ontologies) {
@@ -238,8 +239,9 @@ public class SetupService implements ISetupService {
 		}
 		log.info("{} ontologies were successfully processed.", stats.successcount);
 		writeMixedClassToModuleMappingFile(mixedClassToModuleMapping);
-		log.info("Filtering full dictionary at {} to smaller dictionary at {}.", dictFullPath, dictFilteredPath);
-		filterConceptDictionary(mixedClassToModuleMapping.keySet());
+		// log.info("Filtering full dictionary at {} to smaller dictionary at {}.",
+		// dictFullPath, dictFilteredPath);
+		// filterConceptDictionary(mixedClassToModuleMapping.keySet());
 		log.info(getClass().getSimpleName() + " finished processing.");
 		ontologyRepositoryStatsPrinterService.printOntologyRepositoryStats(new File("ontologyrepositorystats.csv"));
 
@@ -282,38 +284,43 @@ public class SetupService implements ISetupService {
 			log.debug("Adding ontology classes for ontology {} to class-ontology mapping", o.getId());
 			addToMixedClassModuleMapping(classIdsForOntology, o, mixedClassToModuleMapping);
 
-			log.debug("Modularizing ontology {}", o.getId());
-			List<OntologyModule> modules = null;
-			try {
-				 modules = modularizationService.modularize(o);
-			}catch (OntologyModularizationException e) {
-				o.setHasModularizationError(true);
-				throw e;
+			if (o.getModules().isEmpty()) {
+				log.debug("Modularizing ontology {}", o.getId());
+				List<OntologyModule> modules = null;
+				try {
+					modules = modularizationService.modularize(o);
+				} catch (OntologyModularizationException e) {
+					o.setHasModularizationError(true);
+					throw e;
+				}
+				// modules = ontologyModules.get(o.getId()).get(120,
+				// TimeUnit.MINUTES);
+				// } catch (InterruptedException | ExecutionException e) {
+				// o.setHasModularizationError(true);
+				// log.error("Exception happened during modularization: " +
+				// e.getMessage(), e);
+				// } catch (TimeoutException e) {
+				// log.debug("Modularization of ontology {} timed out, no modules
+				// are created for this ontology.",
+				// o.getId());
+				// ontologyModules.get(o.getId()).cancel(true);
+				// o.setHasModularizationError(true);
+				// }
+				o.setHasModularizationError(false);
+				if (modules == null) {
+					modules = Collections.emptyList();
+				}
+				for (OntologyModule om : modules) {
+					log.debug("Retrieving class IDs of module {}", om.getId());
+					Set<String> mixedClassIdsForModule = metaConceptService.getMixedClassIdsForOntology(om);
+					om.setClassIds(mixedClassIdsForModule);
+					log.debug("Adding classes of module {} to class-ontology mapping", om.getId());
+					addToMixedClassModuleMapping(mixedClassIdsForModule, om, mixedClassToModuleMapping);
+					log.debug("Running constant scorers on module {}", om.getId());
+					constantScoringChain.score(om);
+				}
+				dbService.storeOntologies(modules, false);
 			}
-//				modules = ontologyModules.get(o.getId()).get(120, TimeUnit.MINUTES);
-//			} catch (InterruptedException | ExecutionException e) {
-//				o.setHasModularizationError(true);
-//				log.error("Exception happened during modularization: " + e.getMessage(), e);
-//			} catch (TimeoutException e) {
-//				log.debug("Modularization of ontology {} timed out, no modules are created for this ontology.",
-//						o.getId());
-//				ontologyModules.get(o.getId()).cancel(true);
-//				o.setHasModularizationError(true);
-//			}
-			o.setHasModularizationError(false);
-			if (modules == null) {
-				modules = Collections.emptyList();
-			}
-			for (OntologyModule om : modules) {
-				log.debug("Retrieving class IDs of module {}", om.getId());
-				Set<String> mixedClassIdsForModule = metaConceptService.getMixedClassIdsForOntology(om);
-				om.setClassIds(mixedClassIdsForModule);
-				log.debug("Adding classes of module {} to class-ontology mapping", om.getId());
-				addToMixedClassModuleMapping(mixedClassIdsForModule, om, mixedClassToModuleMapping);
-				log.debug("Running constant scorers on module {}", om.getId());
-				constantScoringChain.score(om);
-			}
-			dbService.storeOntologies(modules, false);
 			stats.successcount++;
 			log.debug("Writing ontology scores back to database");
 			// for ontology scoring

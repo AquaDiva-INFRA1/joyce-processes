@@ -12,34 +12,97 @@
 	<description>This project is meant to tie together other AquaDiva Ontology Selection (ADOS) modules together to perform the actual selection process and possibly other processes required to fulfill tasks.</description>
 	<build>
 		<plugins>
+			<!-- <plugin> -->
+			<!-- <groupId>org.apache.maven.plugins</groupId> -->
+			<!-- <artifactId>maven-jar-plugin</artifactId> -->
+			<!-- <configuration> -->
+			<!-- <excludes> -->
+			<!-- <exclude>**/logback.xml</exclude> -->
+			<!-- </excludes> -->
+			<!-- </configuration> -->
+			<!-- </plugin> -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>**/logback.xml</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2</version>
-				<configuration>
-					<descriptors>
-						<descriptor>app.xml</descriptor>
-					</descriptors>
-					<archive>
-						<manifest>
-							<mainClass>de.aquadiva.joyce.application.JoyceApplication</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
 						<goals>
-							<goal>single</goal>
+							<goal>shade</goal>
 						</goals>
+						<configuration>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>de.aquadiva.joyce.application.JoyceApplication</mainClass>
+								</transformer>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/org.neo4j.kernel.extension.KernelExtensionFactory</resource>
+								</transformer>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/org.apache.lucene.codecs.PostingsFormat</resource>
+								</transformer>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/org.apache.lucene.codecs.Codec</resource>
+								</transformer>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/org.apache.lucene.codecs.DocValuesFormat</resource>
+								</transformer>
+							</transformers>
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- <plugin> -->
+			<!-- <artifactId>maven-assembly-plugin</artifactId> -->
+			<!-- <version>2.2</version> -->
+			<!-- <configuration> -->
+			<!-- <descriptors> -->
+			<!-- <descriptor>app.xml</descriptor> -->
+			<!-- </descriptors> -->
+			<!-- <archive> -->
+			<!-- <manifest> -->
+			<!-- <mainClass>de.aquadiva.joyce.application.JoyceApplication</mainClass> -->
+			<!-- </manifest> -->
+			<!-- </archive> -->
+			<!-- </configuration> -->
+			<!-- <executions> -->
+			<!-- <execution> -->
+			<!-- <phase>package</phase> -->
+			<!-- <goals> -->
+			<!-- <goal>single</goal> -->
+			<!-- </goals> -->
+			<!-- </execution> -->
+			<!-- </executions> -->
+			<!-- </plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -50,7 +113,7 @@
 			<groupId>de.aquadiva</groupId>
 			<artifactId>joyce-core</artifactId>
 			<version>${project.parent.version}</version>
-			</dependency>
+		</dependency>
 		<dependency>
 			<groupId>de.aquadiva</groupId>
 			<artifactId>joyce-reasoning</artifactId>
