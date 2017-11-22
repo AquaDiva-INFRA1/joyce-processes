@@ -12,10 +12,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -44,6 +47,7 @@ import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
 import de.aquadiva.joyce.base.util.JoyceException;
 import de.aquadiva.joyce.core.services.IOntologyModularizationService;
 import de.aquadiva.joyce.util.OntologyModularizationException;
+import de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt;
 
 /**
  * Sets up the environment for ontology module selection.<br/>
@@ -121,7 +125,8 @@ public class SetupService implements ISetupService {
 	private IConstantOntologyScorer constantScoringChain;
 	private boolean downloadOntologies;
 	private File mixedClassOntologyMappingFile;
-	private String[] requestedAcronyms;
+	private String[] requestedOntologyAcronyms;
+	private String[] requestedMappingAcronyms;
 	private IOWLParsingService owlParsingService;
 	private File errorFile;
 	private String dictFullPath;
@@ -134,6 +139,7 @@ public class SetupService implements ISetupService {
 	private boolean downloadMappings;
 	private IOntologyNameExtractionService classNameExtractionService;
 	private INeo4jService neo4jService;
+	private File gazetteerConfigFile;
 
 	public SetupService(Logger log, IOntologyDownloadService downloadService,
 			IOntologyFormatConversionService formatConversionService, IOntologyDBService dbService,
@@ -146,9 +152,11 @@ public class SetupService implements ISetupService {
 			@Symbol(JoyceSymbolConstants.SETUP_IMPORT_ONTOLOGIES) boolean doImport,
 			@Symbol(JoyceSymbolConstants.SETUP_ERROR_FILE) File errorFile,
 			@Symbol(JoyceSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING) String classOntologyMappingFile,
-			@Symbol(JoyceSymbolConstants.ONTOLOGIES_FOR_DOWNLOAD) String requestedAcronyms,
+			@Symbol(JoyceSymbolConstants.ONTOLOGIES_FOR_DOWNLOAD) String requestedOntologyAcronyms,
+			@Symbol(JoyceSymbolConstants.MAPPINGS_FOR_DOWNLOAD) String requestedMappingAcronyms,
 			@Symbol(JoyceSymbolConstants.DICT_FULL_PATH) String dictFullPath,
 			@Symbol(JoyceSymbolConstants.DICT_FILTERED_PATH) String dictFilteredPath,
+			@Symbol(JoyceSymbolConstants.GAZETTEER_CONFIG) File gazetteerConfigFile,
 			IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService,
 			ExecutorService executorService) {
 		this.log = log;
@@ -168,15 +176,21 @@ public class SetupService implements ISetupService {
 		this.errorFile = errorFile;
 		this.dictFullPath = dictFullPath;
 		this.dictFilteredPath = dictFilteredPath;
+		this.gazetteerConfigFile = gazetteerConfigFile;
 		this.ontologyRepositoryStatsPrinterService = ontologyRepositoryStatsPrinterService;
 		this.executorService = executorService;
 		this.mixedClassOntologyMappingFile = classOntologyMappingFile.endsWith(".gz")
 				? new File(classOntologyMappingFile)
 				: new File(classOntologyMappingFile + ".gz");
-		if (!StringUtils.isBlank(requestedAcronyms))
-			this.requestedAcronyms = requestedAcronyms.split(",");
+		if (!StringUtils.isBlank(requestedOntologyAcronyms))
+			this.requestedOntologyAcronyms = requestedOntologyAcronyms.split(",");
 		else
-			this.requestedAcronyms = new String[0];
+			this.requestedOntologyAcronyms = new String[0];
+		
+		if (!StringUtils.isBlank(requestedMappingAcronyms))
+			this.requestedMappingAcronyms = requestedMappingAcronyms.split(",");
+		else
+			this.requestedMappingAcronyms = new String[0];
 	}
 
 	@Override
@@ -186,13 +200,13 @@ public class SetupService implements ISetupService {
 
 		if (downloadOntologies) {
 			log.info("Downloading ontologies from BioPortal...");
-			downloadService.downloadBioPortalOntologiesToConfigDirs(requestedAcronyms);
+			downloadService.downloadBioPortalOntologiesToConfigDirs(requestedOntologyAcronyms);
 		} else {
 			log.info("Ontology download is switched off, system will be set up using existing ontology files on disc.");
 		}
 		if (downloadMappings) {
 			log.info("Downloading mappings from BioPortal...");
-			downloadService.downloadBioPortalMappingsToConfigDirs(requestedAcronyms);
+			downloadService.downloadBioPortalMappingsToConfigDirs(requestedMappingAcronyms);
 		} else {
 			log.info("Mapping download is switched off, system will be set up using existing mapping files on disc.");
 		}
@@ -242,9 +256,22 @@ public class SetupService implements ISetupService {
 		// log.info("Filtering full dictionary at {} to smaller dictionary at {}.",
 		// dictFullPath, dictFilteredPath);
 		// filterConceptDictionary(mixedClassToModuleMapping.keySet());
+		log.info("Writing concept gazetteer configuration file, used to recognize concept classes in the input text for ontology module selection, to {}", gazetteerConfigFile);
+		writeConceptGazetteerConfigurationFile(dictFilteredPath);
 		log.info(getClass().getSimpleName() + " finished processing.");
 		ontologyRepositoryStatsPrinterService.printOntologyRepositoryStats(new File("ontologyrepositorystats.csv"));
 
+	}
+
+	private void writeConceptGazetteerConfigurationFile(String dictPath) {
+		Properties p = new Properties();
+		p.setProperty(ChunkerProviderImplAlt.PARAM_DICTIONARY_FILE, dictPath);
+		p.setProperty(ChunkerProviderImplAlt.PARAM_STOPWORD_FILE, "/general_english_words");
+		p.setProperty(ChunkerProviderImplAlt.PARAM_CASE_SENSITIVE, "false");
+		p.setProperty(ChunkerProviderImplAlt.PARAM_MAKE_VARIANTS, "false");
+		p.setProperty(ChunkerProviderImplAlt.PARAM_NORMALIZE_TEXT, "true");
+		p.setProperty(ChunkerProviderImplAlt.PARAM_TRANSLITERATE_TEXT, "true");
+		p.setProperty(ChunkerProviderImplAlt.PARAM_USE_APPROXIMATE_MATCHING, "true");
 	}
 
 	private class ModularizationWorker implements Callable<List<OntologyModule>> {
@@ -284,7 +311,7 @@ public class SetupService implements ISetupService {
 			log.debug("Adding ontology classes for ontology {} to class-ontology mapping", o.getId());
 			addToMixedClassModuleMapping(classIdsForOntology, o, mixedClassToModuleMapping);
 
-			if (o.getModules().isEmpty()) {
+			if (o.getModules() == null || o.getModules().isEmpty()) {
 				log.debug("Modularizing ontology {}", o.getId());
 				List<OntologyModule> modules = null;
 				try {
@@ -397,4 +424,5 @@ public class SetupService implements ISetupService {
 		int progress = 0;
 		int successcount = 0;
 	}
+	
 }

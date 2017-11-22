@@ -38,7 +38,7 @@ joyce.mappings.download.dir=ontology-download/mappings
 
 # ------ Ontology or Module Selection Settings ------
 
-joyce.ontologies.concepts.gazetteer.conffile=<GAZETTEER CONFIG FILE>
+joyce.ontologies.concepts.gazetteer.conffile=resources/conceptgazetteer.properties
 joyce.selection.selectontologies=false
 joyce.selection.selectlocalitymodules=true
 joyce.selection.selectconceptclustermodules=false

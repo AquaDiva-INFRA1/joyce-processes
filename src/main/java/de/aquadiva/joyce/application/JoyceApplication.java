@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -223,20 +225,28 @@ public class JoyceApplication {
 		Function<String, File> gf = s -> new File(config.getProperty(s));
 		// The following function checks whether a given file name exists
 		Function<String, Boolean> f = s -> gf.apply(s).exists();
+		Matcher dbFileMatcher = Pattern.compile("file:([^;]+);").matcher("");
+		dbFileMatcher.reset(config.getProperty(JoyceSymbolConstants.JPA_JDBC_URL, ""));
+		File dbFile = null;
+		if (dbFileMatcher.find()) {
+			dbFile = new File(dbFileMatcher.group(1));
+		}
 		if (f.apply(ONTOLOGIES_DOWNLOAD_DIR) || f.apply(ONTOLOGY_INFO_DOWNLOAD_DIR) || f.apply(MAPPINGS_DOWNLOAD_DIR)
-				|| f.apply(ONTOLOGY_CLASSES_NAMES_DIR) || f.apply(NEO4J_PATH) || f.apply(OWL_DIR)) {
+				|| f.apply(ONTOLOGY_CLASSES_NAMES_DIR) || f.apply(NEO4J_PATH) || f.apply(OWL_DIR) || (dbFile != null && dbFile.exists())) {
 			Consumer<String> delete = s -> {
 				if (f.apply(s))
 					Files.removeRecursive(gf.apply(s));
 			};
 			if (readYesNoFromStdInWithMessage(
-					"There is already ontology or mapping data downloaded or derived from downloads. Should existing data be removed?")) {
+					"There is already ontology or mapping data downloaded or derived from downloads. Should existing data be removed? Warning: This will remove all data, including the ontology database.")) {
 				delete.accept(ONTOLOGIES_DOWNLOAD_DIR);
 				delete.accept(ONTOLOGY_INFO_DOWNLOAD_DIR);
 				delete.accept(MAPPINGS_DOWNLOAD_DIR);
 				delete.accept(ONTOLOGY_CLASSES_NAMES_DIR);
 				delete.accept(NEO4J_PATH);
 				delete.accept(OWL_DIR);
+				if (dbFile != null && dbFile.exists())
+					Files.removeRecursive(dbFile);
 			}
 		}
 
