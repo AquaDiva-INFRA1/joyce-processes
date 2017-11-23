@@ -47,6 +47,7 @@ import de.aquadiva.joyce.base.data.IOntology;
 import de.aquadiva.joyce.base.data.InfoType;
 import de.aquadiva.joyce.base.data.OntologySet;
 import de.aquadiva.joyce.base.data.ScoreType;
+import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
 import de.aquadiva.joyce.base.util.JoyceException;
 import de.aquadiva.joyce.processes.services.IOntologyModuleSelectionService;
 import de.aquadiva.joyce.processes.services.ISetupService;
@@ -64,12 +65,18 @@ import de.aquadiva.joyce.processes.services.SelectionParameters.SelectionType;
 public class JoyceApplication {
 
 	private static Logger log = LoggerFactory.getLogger(JoyceApplication.class);
+	
+	static {
+		// We need this to have hibernate use slf4j logging.
+		System.setProperty("org.jboss.logging.provider", "slf4j");
+	}
 
 	public static void main(String[] args) throws IOException, JoyceException {
 		if (args.length == 0) {
 			System.err.println("Select from the following modes:");
 			System.err.println("-s setup");
 			System.err.println("-e select ontology modules");
+			System.err.println("-p print JOYCE ontology repository statistics");
 			System.exit(1);
 		}
 		long time = System.currentTimeMillis();
@@ -124,40 +131,51 @@ public class JoyceApplication {
 				File resultDir = new File("selectionresult");
 				if (!resultDir.exists())
 					resultDir.mkdir();
-				log.info("The result ontologies and result statistics are written to {}", resultDir);
 
-				OntologySet firstResult = selection.get(0);
+				if (!selection.isEmpty()) {
+					log.info("The result ontologies and result statistics are written to {}", resultDir);
+					OntologySet firstResult = selection.get(0);
 
-				try (OutputStream os = new FileOutputStream(
-						new File(resultDir.getAbsolutePath() + File.separator + "resultstats.txt"))) {
-					IOUtils.write(firstResult.getScores().toString() + "\n", os);
-				}
-				try (OutputStream os = new FileOutputStream(
-						new File(resultDir.getAbsolutePath() + File.separator + "missingclasses.txt"))) {
-					for (String classId : firstResult.getCachedInformation(InfoType.MISSING_CLASSES)) {
-						IOUtils.write(classId + "\n", os);
+					try (OutputStream os = new FileOutputStream(
+							new File(resultDir.getAbsolutePath() + File.separator + "resultstats.txt"))) {
+						IOUtils.write(firstResult.getScores().toString() + "\n", os);
 					}
-				}
-				try (OutputStream os = new FileOutputStream(
-						new File(resultDir.getAbsolutePath() + File.separator + "coveredclasses.txt"))) {
-					for (String classId : firstResult.getCachedInformation(InfoType.COVERING_CLASSES).elementSet()) {
-						IOUtils.write(classId + "\n", os);
+					try (OutputStream os = new FileOutputStream(
+							new File(resultDir.getAbsolutePath() + File.separator + "missingclasses.txt"))) {
+						for (String classId : firstResult.getCachedInformation(InfoType.MISSING_CLASSES)) {
+							IOUtils.write(classId + "\n", os);
+						}
 					}
-				}
+					try (OutputStream os = new FileOutputStream(
+							new File(resultDir.getAbsolutePath() + File.separator + "coveredclasses.txt"))) {
+						for (String classId : firstResult.getCachedInformation(InfoType.COVERING_CLASSES)
+								.elementSet()) {
+							IOUtils.write(classId + "\n", os);
+						}
+					}
 
-				for (IOntology o : firstResult.getOntologies()) {
-					File ontologyFile = o.getFile();
-					File destFile = new File(resultDir.getAbsolutePath() + File.separator + ontologyFile.getName());
-					if (ontologyFile.exists()) {
-						FileUtils.copyFile(ontologyFile, destFile);
-					} else {
-						byte[] ontologyData = o.getOntologyData();
-						try (OutputStream os = new FileOutputStream(destFile)) {
-							IOUtils.write(ontologyData, os);
+					for (IOntology o : firstResult.getOntologies()) {
+						File ontologyFile = o.getFile();
+						File destFile = new File(resultDir.getAbsolutePath() + File.separator + ontologyFile.getName());
+						if (ontologyFile.exists()) {
+							FileUtils.copyFile(ontologyFile, destFile);
+						} else {
+							byte[] ontologyData = o.getOntologyData();
+							try (OutputStream os = new FileOutputStream(destFile)) {
+								IOUtils.write(ontologyData, os);
+							}
 						}
 					}
 				}
-
+				break;
+			case "-p":
+				IOntologyRepositoryStatsPrinterService printerService = registry
+						.getService(IOntologyRepositoryStatsPrinterService.class);
+				File file = new File("ontologyrepositorystats.csv");
+				log.info(
+						"Printing ontology statistics to {}. This may take a long time depending on the repository size.",
+						file);
+				printerService.printOntologyRepositoryStats(file);
 				break;
 			}
 		} finally {
@@ -227,12 +245,17 @@ public class JoyceApplication {
 		Function<String, Boolean> f = s -> gf.apply(s).exists();
 		Matcher dbFileMatcher = Pattern.compile("file:([^;]+);").matcher("");
 		dbFileMatcher.reset(config.getProperty(JoyceSymbolConstants.JPA_JDBC_URL, ""));
-		File dbFile = null;
+		String dbPath = null;
+		File dbDirectory = null;
 		if (dbFileMatcher.find()) {
-			dbFile = new File(dbFileMatcher.group(1));
+			dbPath = dbFileMatcher.group(1);
+			int lastPathElementStartIndex = dbPath.lastIndexOf('/');
+			dbDirectory = new File(dbPath.substring(0, lastPathElementStartIndex));
+
 		}
 		if (f.apply(ONTOLOGIES_DOWNLOAD_DIR) || f.apply(ONTOLOGY_INFO_DOWNLOAD_DIR) || f.apply(MAPPINGS_DOWNLOAD_DIR)
-				|| f.apply(ONTOLOGY_CLASSES_NAMES_DIR) || f.apply(NEO4J_PATH) || f.apply(OWL_DIR) || (dbFile != null && dbFile.exists())) {
+				|| f.apply(ONTOLOGY_CLASSES_NAMES_DIR) || f.apply(NEO4J_PATH) || f.apply(OWL_DIR)
+				|| dbDirectory.exists()) {
 			Consumer<String> delete = s -> {
 				if (f.apply(s))
 					Files.removeRecursive(gf.apply(s));
@@ -245,8 +268,10 @@ public class JoyceApplication {
 				delete.accept(ONTOLOGY_CLASSES_NAMES_DIR);
 				delete.accept(NEO4J_PATH);
 				delete.accept(OWL_DIR);
-				if (dbFile != null && dbFile.exists())
-					Files.removeRecursive(dbFile);
+				if (dbDirectory.exists()) {
+					log.debug("Deleting ontology database directory {}", dbDirectory);
+					Files.removeRecursive(dbDirectory);
+				}
 			}
 		}
 

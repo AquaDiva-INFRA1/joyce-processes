@@ -4,7 +4,7 @@
 		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
 			by default -->
 		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{80} - %msg%n
 			</pattern>
 		</encoder>
 	</appender>
@@ -20,14 +20,18 @@
 		</encoder>
 	</appender>
 
-	<logger name="org.hibernate" level="WARN" />
+	<logger name="org.hibernate" level="ERROR" />
 	<logger name="org.apache.tapestry5.ioc" level="INFO" />
 	<logger name="org.apache.tapestry5" level="INFO" />
 	<logger
 		name="de.aquadiva.ontologyselection.processes.services.OSProcessesModule.ISetupService"
 		level="DEBUG" />
 	<logger name="org.apache.http" level="INFO" />
-	<root level="DEBUG">
+	<logger name="de.julielab.bioportal.ontologies.MappingDownloader" level="WARN" />
+	<logger name="de.julielab.neo4j.plugins.ConceptManager" level="ERROR" />
+	<logger name="de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt" level="WARN" />
+	<logger name="de.aquadiva.joyce.processes.services.JoyceProcessesModule.IOntologyModuleSelectionService" level="trace" />
+	<root level="INFO">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
 	</root>

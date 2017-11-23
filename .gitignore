@@ -6,3 +6,8 @@ selection_*.txt
 /ERRORS_SETUP.txt
 /ontologyDownloadReport.txt
 /ontologyrepositorystats.csv
+/ontology-db/
+/ontology-download/
+/resources/
+*.log
+/configuration.properties

@@ -1,14 +1,16 @@
 package de.aquadiva.joyce.processes.services;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.Writer;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,14 +19,10 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tapestry5.ioc.annotations.Symbol;
 import org.slf4j.Logger;
@@ -47,6 +45,7 @@ import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
 import de.aquadiva.joyce.base.util.JoyceException;
 import de.aquadiva.joyce.core.services.IOntologyModularizationService;
 import de.aquadiva.joyce.util.OntologyModularizationException;
+import de.julielab.java.utilities.FileUtilities;
 import de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt;
 
 /**
@@ -129,8 +128,7 @@ public class SetupService implements ISetupService {
 	private String[] requestedMappingAcronyms;
 	private IOWLParsingService owlParsingService;
 	private File errorFile;
-	private String dictFullPath;
-	private String dictFilteredPath;
+	private String dictPath;
 	private boolean doConvert;
 	private IMetaConceptService metaConceptService;
 	private IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService;
@@ -139,7 +137,11 @@ public class SetupService implements ISetupService {
 	private boolean downloadMappings;
 	private IOntologyNameExtractionService classNameExtractionService;
 	private INeo4jService neo4jService;
-	private File gazetteerConfigFile;
+	/**
+	 * We want to get an URL not because we need it in this code to be a URL but
+	 * because UIMA requires it later when using the Gazetteer.
+	 */
+	private String gazetteerConfigUrl;
 
 	public SetupService(Logger log, IOntologyDownloadService downloadService,
 			IOntologyFormatConversionService formatConversionService, IOntologyDBService dbService,
@@ -154,11 +156,10 @@ public class SetupService implements ISetupService {
 			@Symbol(JoyceSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING) String classOntologyMappingFile,
 			@Symbol(JoyceSymbolConstants.ONTOLOGIES_FOR_DOWNLOAD) String requestedOntologyAcronyms,
 			@Symbol(JoyceSymbolConstants.MAPPINGS_FOR_DOWNLOAD) String requestedMappingAcronyms,
-			@Symbol(JoyceSymbolConstants.DICT_FULL_PATH) String dictFullPath,
-			@Symbol(JoyceSymbolConstants.DICT_FILTERED_PATH) String dictFilteredPath,
-			@Symbol(JoyceSymbolConstants.GAZETTEER_CONFIG) File gazetteerConfigFile,
+			@Symbol(JoyceSymbolConstants.CONCEPT_TERM_DICTIONARY) String dictPath,
+			@Symbol(JoyceSymbolConstants.GAZETTEER_CONFIG) String gazetteerConfigUrl,
 			IOntologyRepositoryStatsPrinterService ontologyRepositoryStatsPrinterService,
-			ExecutorService executorService) {
+			ExecutorService executorService) throws JoyceException {
 		this.log = log;
 		this.downloadService = downloadService;
 		this.formatConversionService = formatConversionService;
@@ -174,9 +175,8 @@ public class SetupService implements ISetupService {
 		this.doConvert = doConvert;
 		this.doImport = doImport;
 		this.errorFile = errorFile;
-		this.dictFullPath = dictFullPath;
-		this.dictFilteredPath = dictFilteredPath;
-		this.gazetteerConfigFile = gazetteerConfigFile;
+		this.dictPath = dictPath;
+		this.gazetteerConfigUrl = gazetteerConfigUrl;
 		this.ontologyRepositoryStatsPrinterService = ontologyRepositoryStatsPrinterService;
 		this.executorService = executorService;
 		this.mixedClassOntologyMappingFile = classOntologyMappingFile.endsWith(".gz")
@@ -186,7 +186,7 @@ public class SetupService implements ISetupService {
 			this.requestedOntologyAcronyms = requestedOntologyAcronyms.split(",");
 		else
 			this.requestedOntologyAcronyms = new String[0];
-		
+
 		if (!StringUtils.isBlank(requestedMappingAcronyms))
 			this.requestedMappingAcronyms = requestedMappingAcronyms.split(",");
 		else
@@ -253,17 +253,16 @@ public class SetupService implements ISetupService {
 		}
 		log.info("{} ontologies were successfully processed.", stats.successcount);
 		writeMixedClassToModuleMappingFile(mixedClassToModuleMapping);
-		// log.info("Filtering full dictionary at {} to smaller dictionary at {}.",
-		// dictFullPath, dictFilteredPath);
-		// filterConceptDictionary(mixedClassToModuleMapping.keySet());
-		log.info("Writing concept gazetteer configuration file, used to recognize concept classes in the input text for ontology module selection, to {}", gazetteerConfigFile);
-		writeConceptGazetteerConfigurationFile(dictFilteredPath);
+		log.info(
+				"Writing concept gazetteer configuration file, used to recognize concept classes in the input text for ontology module selection, to \"{}\"",
+				gazetteerConfigUrl);
+		writeConceptGazetteerConfigurationFile(dictPath);
 		log.info(getClass().getSimpleName() + " finished processing.");
 		ontologyRepositoryStatsPrinterService.printOntologyRepositoryStats(new File("ontologyrepositorystats.csv"));
 
 	}
 
-	private void writeConceptGazetteerConfigurationFile(String dictPath) {
+	private void writeConceptGazetteerConfigurationFile(String dictPath) throws IOException {
 		Properties p = new Properties();
 		p.setProperty(ChunkerProviderImplAlt.PARAM_DICTIONARY_FILE, dictPath);
 		p.setProperty(ChunkerProviderImplAlt.PARAM_STOPWORD_FILE, "/general_english_words");
@@ -272,6 +271,10 @@ public class SetupService implements ISetupService {
 		p.setProperty(ChunkerProviderImplAlt.PARAM_NORMALIZE_TEXT, "true");
 		p.setProperty(ChunkerProviderImplAlt.PARAM_TRANSLITERATE_TEXT, "true");
 		p.setProperty(ChunkerProviderImplAlt.PARAM_USE_APPROXIMATE_MATCHING, "true");
+		try (Writer w = FileUtilities.getWriterToFile(new File(gazetteerConfigUrl.replace("file:", "")))) {
+			p.store(w, "This configuration file was automatically created by " + getClass().getName() + " on "
+					+ new Date());
+		}
 	}
 
 	private class ModularizationWorker implements Callable<List<OntologyModule>> {
@@ -373,34 +376,38 @@ public class SetupService implements ISetupService {
 		}
 	}
 
-	private void filterConceptDictionary(Set<String> actualKnownClasses) {
-		File dictFilteredFile = new File(dictFilteredPath);
-		if (dictFilteredFile.exists())
-			dictFilteredFile.delete();
-		File dir = dictFilteredFile.getParentFile();
-		if (!dir.exists())
-			dir.mkdirs();
-		try (InputStream is = new GZIPInputStream(new FileInputStream(dictFullPath))) {
-			try (OutputStream os = new GZIPOutputStream(new FileOutputStream(dictFilteredPath))) {
-				LineIterator lineIterator = IOUtils.lineIterator(is, "UTF-8");
-				while (lineIterator.hasNext()) {
-					String line = lineIterator.nextLine();
-					String classIri = line.split("\\t")[1];
-					if (actualKnownClasses.contains(classIri))
-						IOUtils.write(line + "\n", os, "UTF-8");
-				}
-			} catch (IOException e) {
-				log.error(
-						"Could not write filtered concept recognition dictionary line. Either the full dictionary could be accessed or the writing failed.");
-				e.printStackTrace();
-			}
-		} catch (IOException e) {
-			log.error(
-					"Could not create the filtered concept recognition dictionary because the full dictionary could not be read from configured path {}: {}",
-					dictFullPath, e.getMessage());
-			e.printStackTrace();
-		}
-	}
+	// private void filterConceptDictionary(Set<String> actualKnownClasses) {
+	// File dictFilteredFile = new File(dictFilteredPath);
+	// if (dictFilteredFile.exists())
+	// dictFilteredFile.delete();
+	// File dir = dictFilteredFile.getParentFile();
+	// if (!dir.exists())
+	// dir.mkdirs();
+	// try (InputStream is = new GZIPInputStream(new FileInputStream(dictFullPath)))
+	// {
+	// try (OutputStream os = new GZIPOutputStream(new
+	// FileOutputStream(dictFilteredPath))) {
+	// LineIterator lineIterator = IOUtils.lineIterator(is, "UTF-8");
+	// while (lineIterator.hasNext()) {
+	// String line = lineIterator.nextLine();
+	// String classIri = line.split("\\t")[1];
+	// if (actualKnownClasses.contains(classIri))
+	// IOUtils.write(line + "\n", os, "UTF-8");
+	// }
+	// } catch (IOException e) {
+	// log.error(
+	// "Could not write filtered concept recognition dictionary line. Either the
+	// full dictionary could be accessed or the writing failed.");
+	// e.printStackTrace();
+	// }
+	// } catch (IOException e) {
+	// log.error(
+	// "Could not create the filtered concept recognition dictionary because the
+	// full dictionary could not be read from configured path {}: {}",
+	// dictFullPath, e.getMessage());
+	// e.printStackTrace();
+	// }
+	// }
 
 	private void writeMixedClassToModuleMappingFile(Multimap<String, String> classToModuleMapping) throws IOException {
 		File dir = mixedClassOntologyMappingFile.getParentFile();
@@ -424,5 +431,5 @@ public class SetupService implements ISetupService {
 		int progress = 0;
 		int successcount = 0;
 	}
-	
+
 }

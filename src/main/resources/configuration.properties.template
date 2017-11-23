@@ -4,10 +4,6 @@
 # ------ General Settings ------
 joyce.jpa.persistence.context=joyce
 
-# ----- Setup Input Resources ------
-joyce.ontologies.dictionary.full.path=resources/bioportalTerms.dict.gz
-joyce.ontologies.concepts.metamapping=resources/metaConceptMapping.tsv.gz
-
 # ------ Joyce Repository Setup ------
 
 # If you don't have one, get a free BioPortal API key by registering at
@@ -27,7 +23,8 @@ joyce.mappings.download.acronyms=
 # ----- Setup Output Resources -----
 joyce.ontologies.neo4j.path=resources/graphdb
 joyce.ontologies.modules.concepts.mixedclassontologymapping=resources/classontologymapping.tsv.gz
-joyce.ontologies.dictionary.filtered.path=resources/bioportalTerms.filtered.dict.gz
+joyce.ontologies.concepts.dict=resources/bioportalConcepts.dict.gz
+joyce.ontologies.concepts.metamapping=resources/metaConceptMapping.tsv.gz
 joyce.ontologies.classes.names.dir=resources/classnames
 joyce.setup.errors.file=ERRORS_SETUP.txt
 joyce.ontologies.download.errors.file=ontology-download/ERRORS_ONTOLOGY_DOWNLOAD.txt
@@ -38,7 +35,7 @@ joyce.mappings.download.dir=ontology-download/mappings
 
 # ------ Ontology or Module Selection Settings ------
 
-joyce.ontologies.concepts.gazetteer.conffile=resources/conceptgazetteer.properties
+joyce.ontologies.concepts.gazetteer.conffile=file:resources/conceptgazetteer.properties
 joyce.selection.selectontologies=false
 joyce.selection.selectlocalitymodules=true
 joyce.selection.selectconceptclustermodules=false

@@ -41,22 +41,39 @@ import de.aquadiva.joyce.base.data.Ontology;
 import de.aquadiva.joyce.base.data.OntologyModule;
 import de.aquadiva.joyce.base.services.IOWLParsingService;
 import de.aquadiva.joyce.base.services.IOntologyDBService;
+import de.aquadiva.joyce.base.services.Neo4jService;
 import de.aquadiva.joyce.processes.services.JoyceProcessesModule;
+import de.aquadiva.joyce.processes.services.SetupService;
 
+/**
+ * WARNING: This class is currently malfunctioning in one aspect: When this
+ * class was written, there was one large dictionary that included all concepts
+ * from BioPortal regardless of which ontologies were in the JoyceRepository.
+ * This large dictionary was filtered to the classes actually present within
+ * Joyce. WE DONT DO THIS ANYMORE. Now, we just create one Neo4j database from
+ * all ontologies, add all mappings and then export the dictionary and other
+ * files. Refer to {@link Neo4jService} and {@link SetupService} for how it is
+ * used. In this class, there is still the filtering step that doesn't make
+ * sense any more. Instead, the Neo4j database should be created anew from
+ * scratch after the full ontologies, from which the integrated modules stem,
+ * have been added to the Joyce repository. I.e. the {@link SetupService} must
+ * be run including the root ontology of the modules to be integrated. Or,
+ * alternatively, some upgrade algorithm has to be implemented here.
+ * 
+ * @author faessler
+ *
+ */
 public class IntegrateModules {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(IntegrateModules.class);
+	private static final Logger log = LoggerFactory.getLogger(IntegrateModules.class);
 
 	private static File classOntologyMappingFile;
 	private static String dictFilteredPath;
-	private static String dictFullPath;
+	private static String dictPath;
 
 	public static void main(String[] args) throws Exception, IOException {
 		if (args.length != 1) {
-			System.out.println("Usage: "
-					+ IntegrateModules.class.getSimpleName()
-					+ " <directory with modules>");
+			System.out.println("Usage: " + IntegrateModules.class.getSimpleName() + " <directory with modules>");
 			System.exit(1);
 		}
 
@@ -69,30 +86,25 @@ public class IntegrateModules {
 			List<String> ontologyIds;
 			IOWLParsingService parsingService;
 
-			registry = RegistryBuilder
-					.buildAndStartupRegistry(JoyceProcessesModule.class);
+			registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 			parsingService = registry.getService(IOWLParsingService.class);
 			SymbolSource symbolSource = registry.getService(SymbolSource.class);
-			dictFilteredPath = symbolSource.valueForSymbol(JoyceSymbolConstants.DICT_FILTERED_PATH);
-			dictFullPath = symbolSource.valueForSymbol(JoyceSymbolConstants.DICT_FULL_PATH);
-			log.debug("Reading the mapping that maps class IRIs to meta class IDs so we can set meta classes to ontologies and modules");
-			Map<String, String> metaConceptMapping = readMetaConceptMapping(new File(
-					symbolSource
-							.valueForSymbol(JoyceSymbolConstants.META_CLASS_TO_IRI_CLASS_MAPPING)));
+			dictPath = symbolSource.valueForSymbol(JoyceSymbolConstants.CONCEPT_TERM_DICTIONARY);
+			log.debug(
+					"Reading the mapping that maps class IRIs to meta class IDs so we can set meta classes to ontologies and modules");
+			Map<String, String> metaConceptMapping = readMetaConceptMapping(
+					new File(symbolSource.valueForSymbol(JoyceSymbolConstants.META_CLASS_TO_IRI_CLASS_MAPPING)));
 			classOntologyMappingFile = new File(
-					symbolSource
-							.valueForSymbol(JoyceSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING));
+					symbolSource.valueForSymbol(JoyceSymbolConstants.MIXEDCLASS_ONTOLOGY_MAPPING));
 
 			log.info("Getting all ontologies from database in order to match their IDs to the module file names.");
-			IOntologyDBService dbService = registry
-					.getService(IOntologyDBService.class);
+			IOntologyDBService dbService = registry.getService(IOntologyDBService.class);
 			ontologies = dbService.getAllOntologies();
 			ontologyIds = new ArrayList<>(ontologies.size());
 			for (Ontology o : ontologies)
 				ontologyIds.add(o.getId().toLowerCase());
 			id2onto = new HashMap<>();
-			log.info("Assigning source ontologies to modules in directory {}",
-					moduleDir);
+			log.info("Assigning source ontologies to modules in directory {}", moduleDir);
 			for (Ontology o : ontologies)
 				id2onto.put(o.getId().toLowerCase(), o);
 
@@ -128,37 +140,28 @@ public class IntegrateModules {
 						iterator.remove();
 				}
 				if (ontoIdsForModule.size() > 1)
-					throw new IllegalStateException(
-							"Ontology module "
-									+ filename
-									+ " has multiple possible source ontologies by their ID: "
-									+ ontoIdsForModule);
+					throw new IllegalStateException("Ontology module " + filename
+							+ " has multiple possible source ontologies by their ID: " + ontoIdsForModule);
 				if (ontoIdsForModule.size() == 0)
-					throw new IllegalStateException(
-							"For ontology module "
-									+ filename
-									+ " no source ontology could be found in the ontology database.");
+					throw new IllegalStateException("For ontology module " + filename
+							+ " no source ontology could be found in the ontology database.");
 
-				Ontology sourceOnto = id2onto.get(ontoIdsForModule.iterator()
-						.next());
+				Ontology sourceOnto = id2onto.get(ontoIdsForModule.iterator().next());
 				byte[] moduleData = null;
 				try (InputStream is = new FileInputStream(moduleFile)) {
 					moduleData = IOUtils.toByteArray(is);
 				}
-				OntologyModule m = sourceOnto
-						.createStaticModule(filename, moduleData);
+				OntologyModule m = sourceOnto.createStaticModule(filename, moduleData);
 				if (m == null) {
-					log.debug(
-							"Module {} of ontology {} is already present and is omitted from this process.",
-							filename, sourceOnto.getId());
+					log.debug("Module {} of ontology {} is already present and is omitted from this process.", filename,
+							sourceOnto.getId());
 					continue;
 				}
 				modules.add(m);
 				log.debug("Retrieving class IDs of module {}", m.getId());
 				OWLOntology owlOntology = parsingService.parse(m);
 				m.setOwlOntology(owlOntology);
-				Set<String> classIdsForModule = getClassIdsForOntology(m,
-						metaConceptMapping);
+				Set<String> classIdsForModule = getClassIdsForOntology(m, metaConceptMapping);
 				m.setClassIds(classIdsForModule);
 				sourceOnto.setHasModularizationError(false);
 			}
@@ -166,23 +169,19 @@ public class IntegrateModules {
 			log.info("Committing new modules and source ontology changes to the database.");
 			dbService.commit();
 
-			log.info("Retrieving all modules and all ontologies with modularization errors from database to create the class to ontology mapping file.");
+			log.info(
+					"Retrieving all modules and all ontologies with modularization errors from database to create the class to ontology mapping file.");
 			List<OntologyModule> allModules = dbService.getAllOntologyModules();
-			List<Ontology> allOntologiesWithModularizationError = dbService
-					.getAllOntologiesWithModularizationError();
+			List<Ontology> allOntologiesWithModularizationError = dbService.getAllOntologiesWithModularizationError();
 			List<IOntology> ontologiesForClassOntologyMapping = new ArrayList<>(
-					allModules.size()
-							+ allOntologiesWithModularizationError.size());
-			log.debug("Got {} ontologies with modularization error:",
-					allOntologiesWithModularizationError.size());
+					allModules.size() + allOntologiesWithModularizationError.size());
+			log.debug("Got {} ontologies with modularization error:", allOntologiesWithModularizationError.size());
 			for (Ontology o : allOntologiesWithModularizationError)
 				log.debug(o.getId());
 			ontologiesForClassOntologyMapping.addAll(allModules);
-			ontologiesForClassOntologyMapping
-					.addAll(allOntologiesWithModularizationError);
+			ontologiesForClassOntologyMapping.addAll(allOntologiesWithModularizationError);
 
-			Multimap<String, String> classToModuleMapping = HashMultimap
-					.create();
+			Multimap<String, String> classToModuleMapping = HashMultimap.create();
 
 			log.info("Creating class to module mapping completely fresh from database information...");
 			for (IOntology o : ontologiesForClassOntologyMapping) {
@@ -190,12 +189,9 @@ public class IntegrateModules {
 					classToModuleMapping.put(classId, o.getId());
 			}
 
-			log.info("Writing class to ontology mapping to "
-					+ classOntologyMappingFile);
+			log.info("Writing class to ontology mapping to " + classOntologyMappingFile);
 			writeClassToModuleMappingFile(classToModuleMapping);
-			log.info(
-					"Filtering full dictionary at {} to smaller dictionary at {}.",
-					dictFullPath, dictFilteredPath);
+			log.info("Filtering full dictionary at {} to smaller dictionary at {}.", dictPath, dictFilteredPath);
 			filterConceptDictionary(classToModuleMapping.keySet());
 
 		} finally {
@@ -203,15 +199,12 @@ public class IntegrateModules {
 				// TODO: That's not good, all the services should be registered
 				// to the registry's shutdown hub and execute their own
 				// shutdowns automatically
-				IOntologyDBService dbservice = registry
-						.getService(IOntologyDBService.class);
+				IOntologyDBService dbservice = registry.getService(IOntologyDBService.class);
 				dbservice.shutdown();
-				ExecutorService executorService = registry
-						.getService(ExecutorService.class);
+				ExecutorService executorService = registry.getService(ExecutorService.class);
 				List<Runnable> remainingThreads = executorService.shutdownNow();
 				if (remainingThreads.size() != 0)
-					System.out.println("Wait for " + remainingThreads.size()
-							+ " to end.");
+					System.out.println("Wait for " + remainingThreads.size() + " to end.");
 				try {
 					executorService.awaitTermination(10, TimeUnit.MINUTES);
 				} catch (InterruptedException e) {
@@ -224,8 +217,7 @@ public class IntegrateModules {
 	}
 
 	// TODO Duplicate to SetupService
-	private static Set<String> getClassIdsForOntology(Ontology o,
-			Map<String, String> metaConceptMapping) {
+	private static Set<String> getClassIdsForOntology(Ontology o, Map<String, String> metaConceptMapping) {
 		OWLOntology owl = o.getOwlOntology();
 		Set<String> classesInModule = new HashSet<>();
 		for (OWLClass c : owl.getClassesInSignature()) {
@@ -243,15 +235,14 @@ public class IntegrateModules {
 	}
 
 	/**
-	 * Returns a mapping FROM class IRIs TO meta class IDs. Classes not
-	 * contained in the mapping just do not have other, equivalent classes.
+	 * Returns a mapping FROM class IRIs TO meta class IDs. Classes not contained in
+	 * the mapping just do not have other, equivalent classes.
 	 * 
 	 * @param metaConceptMappingFile
 	 * @return
 	 */
 	// TODO Duplicate to SetupService
-	private static Map<String, String> readMetaConceptMapping(
-			File metaConceptMappingFile) {
+	private static Map<String, String> readMetaConceptMapping(File metaConceptMappingFile) {
 		Map<String, String> mapping = new HashMap<>();
 		if (!metaConceptMappingFile.exists()) {
 			log.warn(
@@ -259,8 +250,7 @@ public class IntegrateModules {
 					metaConceptMappingFile);
 			return mapping;
 		}
-		try (InputStream is = new GZIPInputStream(new FileInputStream(
-				metaConceptMappingFile))) {
+		try (InputStream is = new GZIPInputStream(new FileInputStream(metaConceptMappingFile))) {
 			LineIterator lineIterator = IOUtils.lineIterator(is, "UTF-8");
 			while (lineIterator.hasNext()) {
 				// format is:
@@ -286,19 +276,15 @@ public class IntegrateModules {
 	}
 
 	// TODO Duplicate to SetupService
-	private static void writeClassToModuleMappingFile(
-			Multimap<String, String> classToModuleMapping) throws IOException {
+	private static void writeClassToModuleMappingFile(Multimap<String, String> classToModuleMapping)
+			throws IOException {
 		File dir = classOntologyMappingFile.getParentFile();
 		if (!dir.exists())
 			dir.mkdirs();
-		try (GZIPOutputStream os = new GZIPOutputStream(new FileOutputStream(
-				classOntologyMappingFile))) {
+		try (GZIPOutputStream os = new GZIPOutputStream(new FileOutputStream(classOntologyMappingFile))) {
 			for (String classId : classToModuleMapping.keySet()) {
-				Collection<String> moduleIds = classToModuleMapping
-						.get(classId);
-				IOUtils.write(
-						classId + "\t" + StringUtils.join(moduleIds, "||")
-								+ "\n", os, "UTF-8");
+				Collection<String> moduleIds = classToModuleMapping.get(classId);
+				IOUtils.write(classId + "\t" + StringUtils.join(moduleIds, "||") + "\n", os, "UTF-8");
 			}
 		}
 	}
@@ -311,10 +297,8 @@ public class IntegrateModules {
 		File dir = dictFilteredFile.getParentFile();
 		if (!dir.exists())
 			dir.mkdirs();
-		try (InputStream is = new GZIPInputStream(new FileInputStream(
-				dictFullPath))) {
-			try (OutputStream os = new GZIPOutputStream(new FileOutputStream(
-					dictFilteredPath))) {
+		try (InputStream is = new GZIPInputStream(new FileInputStream(dictPath))) {
+			try (OutputStream os = new GZIPOutputStream(new FileOutputStream(dictFilteredPath))) {
 				LineIterator lineIterator = IOUtils.lineIterator(is, "UTF-8");
 				while (lineIterator.hasNext()) {
 					String line = lineIterator.nextLine();
@@ -323,15 +307,16 @@ public class IntegrateModules {
 						IOUtils.write(line + "\n", os, "UTF-8");
 				}
 			} catch (IOException e) {
-				log.error("Could not write filtered concept recognition dictionary line. Either the full dictionary could be accessed or the writing failed.");
+				log.error(
+						"Could not write filtered concept recognition dictionary line. Either the full dictionary could be accessed or the writing failed.");
 				e.printStackTrace();
 			}
 		} catch (IOException e) {
 			log.error(
 					"Could not create the filtered concept recognition dictionary because the full dictionary could not be read from configured path {}: {}",
-					dictFullPath, e.getMessage());
+					dictPath, e.getMessage());
 			e.printStackTrace();
 		}
 	}
-	
+
 }

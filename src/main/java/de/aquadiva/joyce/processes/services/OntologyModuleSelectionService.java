@@ -108,6 +108,8 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 		this.classCoverageScorer = classCoverageScorer;
 		this.classOverheadScorer = classOverheadScorer;
 		this.classOverlapScorer = classOverheadScorer;
+		
+		metaConceptService.loadMetaClassIriMaps();
 
 		// This takes about an hour - not worth it. Why it takes so long, I
 		// don't know. (EF, 17.11.2016)
