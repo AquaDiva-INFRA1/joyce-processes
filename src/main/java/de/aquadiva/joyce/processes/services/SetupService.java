@@ -314,9 +314,9 @@ public class SetupService implements ISetupService {
 			log.debug("Adding ontology classes for ontology {} to class-ontology mapping", o.getId());
 			addToMixedClassModuleMapping(classIdsForOntology, o, mixedClassToModuleMapping);
 
+			List<OntologyModule> modules;
 			if (o.getModules() == null || o.getModules().isEmpty()) {
 				log.debug("Modularizing ontology {}", o.getId());
-				List<OntologyModule> modules = null;
 				try {
 					modules = modularizationService.modularize(o);
 				} catch (OntologyModularizationException e) {
@@ -340,17 +340,20 @@ public class SetupService implements ISetupService {
 				if (modules == null) {
 					modules = Collections.emptyList();
 				}
-				for (OntologyModule om : modules) {
-					log.debug("Retrieving class IDs of module {}", om.getId());
-					Set<String> mixedClassIdsForModule = metaConceptService.getMixedClassIdsForOntology(om);
-					om.setClassIds(mixedClassIdsForModule);
-					log.debug("Adding classes of module {} to class-ontology mapping", om.getId());
-					addToMixedClassModuleMapping(mixedClassIdsForModule, om, mixedClassToModuleMapping);
-					log.debug("Running constant scorers on module {}", om.getId());
-					constantScoringChain.score(om);
-				}
-				dbService.storeOntologies(modules, false);
 			}
+			modules = o.getModules();
+			for (OntologyModule om : modules) {
+				log.debug("Retrieving class IDs of module {}", om.getId());
+				if (om.getOwlOntology() == null)
+					owlParsingService.parse(om);
+				Set<String> mixedClassIdsForModule = metaConceptService.getMixedClassIdsForOntology(om);
+				om.setClassIds(mixedClassIdsForModule);
+				log.debug("Adding classes of module {} to class-ontology mapping", om.getId());
+				addToMixedClassModuleMapping(mixedClassIdsForModule, om, mixedClassToModuleMapping);
+				log.debug("Running constant scorers on module {}", om.getId());
+				constantScoringChain.score(om);
+			}
+			dbService.storeOntologies(modules, false);
 			stats.successcount++;
 			log.debug("Writing ontology scores back to database");
 			// for ontology scoring

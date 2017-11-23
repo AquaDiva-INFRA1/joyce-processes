@@ -31,6 +31,7 @@
 	<logger name="de.julielab.neo4j.plugins.ConceptManager" level="ERROR" />
 	<logger name="de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt" level="WARN" />
 	<logger name="de.aquadiva.joyce.processes.services.JoyceProcessesModule.IOntologyModuleSelectionService" level="trace" />
+	<logger name="java.sql.DatabaseMetaData" level="WARN" />
 	<root level="INFO">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
