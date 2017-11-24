@@ -11,3 +11,4 @@ selection_*.txt
 /resources/
 *.log
 /configuration.properties
+/selectionresult/
