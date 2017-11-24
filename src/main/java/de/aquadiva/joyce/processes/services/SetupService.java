@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,23 +48,8 @@ import de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt;
 /**
  * Sets up the environment for ontology module selection.<br/>
  * <p>
- * Input:
- * <ul>
- * <li>A configuration file 'configuration.properties' with keys from
+ * Input: >A configuration file 'configuration.properties' with keys from
  * {@link JoyceSymbolConstants}.</li>
- * <li>A term-to-classIRI/metaClassId dictionary mapping all names and synonyms
- * of classes to the respective class IRIs or meta class ID. The location of
- * this dictionary must be configured in the configuration file with key
- * {@link JoyceSymbolConstants#DICT_FULL_PATH}.</li>
- * <li>A meta-concept-mapping-file that maps artificial meta-concept ID to lists
- * of class IRIs that represent equivalent classes. This mapping can have any
- * source, typically the BioPortal mappings are used. The file location is
- * configured with property
- * {@link JoyceSymbolConstants#META_CLASS_TO_IRI_CLASS_MAPPING}</li>
- * </ul>
- * Please note that the mapping files/dictionaries are currently created by an
- * external process/database. This project does not contain classes to create
- * these files.
  * </p>
  * <p>
  * Output:
@@ -80,6 +62,15 @@ import de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt;
  * <li>A dictionary mapping class names and synonyms to class IRIs or meta-class
  * IDs for the automatic detection of classes in user input. Written to a file
  * given by {@link JoyceSymbolConstants#DICT_FILTERED_PATH}</li>
+ *  <li>A term-to-classIRI/metaClassId dictionary mapping all names and synonyms
+ * of classes to the respective class IRIs or meta class ID. The location of
+ * this dictionary must be configured in the configuration file with key
+ * {@link JoyceSymbolConstants#DICT_FULL_PATH}.</li>
+ * <li>A meta-concept-mapping-file that maps artificial meta-concept ID to lists
+ * of class IRIs that represent equivalent classes. This mapping can have any
+ * source, typically the BioPortal mappings are used. The file location is
+ * configured with property
+ * {@link JoyceSymbolConstants#META_CLASS_TO_IRI_CLASS_MAPPING}</li>
  * </ul>
  * </p>
  * 
@@ -89,7 +80,9 @@ import de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt;
  * <li>Downloads original ontology files (mainly in OWL and OBO format) from
  * BioPortal IF the configuration property
  * {@link JoyceSymbolConstants#SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES} is set to
- * <tt>true</tt>..</li>
+ * <li>Downloads ontology class mappings IF the configuration property
+ * {@link JoyceSymbolConstants#SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS} is set to
+ * <tt>true</tt>.</li>
  * <li>Converts OBO ontologies to OWL format IF the configuration property
  * {@link JoyceSymbolConstants#SETUP_CONVERT_TO_OWL} is set to
  * <tt>true</tt>.</li>
@@ -104,10 +97,9 @@ import de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt;
  * ontologies or modules, respectively. The mapping is stored to the file given
  * with configuration property
  * {@link JoyceSymbolConstants#MIXEDCLASS_ONTOLOGY_MAPPING}</li>
- * <li>Filters the pre-created ontology class term dictionary at path given with
- * {@link JoyceSymbolConstants#DICT_FULL_PATH} to a smaller dictionary, only
- * including classes actually seen during the setup process, and stores it to
- * the path given through {@link JoyceSymbolConstants#DICT_FILTERED_PATH}.</li>
+ * <li>Extracts all names from the downloaded ontologies</li>
+ * <li>Creates an embedded Neo4j graph database from the extracted names and adds the mappings</li>
+ * <li>Export a concept name dictionary and the meta class mapping file from the Neo4j database.</li>
  * </ol>
  * </p>
  * 
