@@ -9,6 +9,16 @@ This is the main application project that relies on *joyce-base* and *joyce-core
 Upon doing a `mvn clean package` of this project (if the other JOYCE projects where not installed via `mvn clean install` you might want to do so first by executing `mvn clean install` on the root joyce project), an *uber JAR* will be created in the `target/` directory containing everything to run JOYCE. Start it with
 `java -jar target/joyce-processes-<version>.jar`. A menu will come up showing the options.
 
+### Errors and warnings while execution
+
+There might be different stack traces printed onto the console when running either the setup or the ontology module selection. The following exceptions can be dismissed:
+
+- org.apache.uima.util.InvalidXMLException: Invalid descriptor at jar[...]!/de/julielab/jcore/types/priorities/jcore-type-priorities.xml
+- org.apache.jena.riot.RiotException: [line: 1, col: 50] White spaces are required between publicId and systemId within modularization
+
+The first relates to a UIMA file for the gazetteer dictionary lookup component that is not used and can thus be ignored.
+The second points to some broken ontology input file. While this is an error, it does not lie with JOYCE. The modularization does still produce results in some cases. 
+
 ## Main services
 
 ### de.aquadiva.joyce.processes.services.ISetupService
