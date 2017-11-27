@@ -83,7 +83,6 @@ public class JoyceApplication {
 		String mode = args[0];
 		Registry registry = null;
 		try {
-			registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 			switch (mode) {
 			case "-s":
 				String configFilePath = System.getProperty(JoyceSymbolConstants.JOYCE_CONFIG_FILE);
@@ -103,7 +102,6 @@ public class JoyceApplication {
 					configFilePath = args[1];
 				}
 				System.setProperty(JoyceSymbolConstants.JOYCE_CONFIG_FILE, configFilePath);
-				registry.shutdown();
 				registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 				ISetupService setupService = registry.getService(ISetupService.class);
 				setupService.setupSelectionSystem();
@@ -115,6 +113,7 @@ public class JoyceApplication {
 					break;
 				}
 				File textInput = new File(args[1]);
+				registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 				IOntologyModuleSelectionService selectionService = registry
 						.getService(IOntologyModuleSelectionService.class);
 				SelectionParameters p = new SelectionParameters();
@@ -169,6 +168,7 @@ public class JoyceApplication {
 				}
 				break;
 			case "-p":
+				registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 				IOntologyRepositoryStatsPrinterService printerService = registry
 						.getService(IOntologyRepositoryStatsPrinterService.class);
 				File file = new File("ontologyrepositorystats.csv");

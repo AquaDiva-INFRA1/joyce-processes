@@ -33,7 +33,7 @@ public class JoyceProcessesModule {
 	
 	public static void bind(ServiceBinder binder) {
 		binder.bind(ISetupService.class, SetupService.class);
-		binder.bind(IOntologyModuleSelectionService.class, OntologyModuleSelectionService.class).eagerLoad();
+		binder.bind(IOntologyModuleSelectionService.class, OntologyModuleSelectionService.class);
 		
 		binder.bind(ITermDiversityMeasurementService.class, TermDiversityMeasurementService.class);
 	}
