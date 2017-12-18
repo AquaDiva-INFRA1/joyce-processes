@@ -62,7 +62,7 @@ import de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt;
  * <li>A dictionary mapping class names and synonyms to class IRIs or meta-class
  * IDs for the automatic detection of classes in user input. Written to a file
  * given by {@link JoyceSymbolConstants#DICT_FILTERED_PATH}</li>
- *  <li>A term-to-classIRI/metaClassId dictionary mapping all names and synonyms
+ * <li>A term-to-classIRI/metaClassId dictionary mapping all names and synonyms
  * of classes to the respective class IRIs or meta class ID. The location of
  * this dictionary must be configured in the configuration file with key
  * {@link JoyceSymbolConstants#DICT_FULL_PATH}.</li>
@@ -98,8 +98,10 @@ import de.julielab.jcore.ae.lingpipegazetteer.chunking.ChunkerProviderImplAlt;
  * with configuration property
  * {@link JoyceSymbolConstants#MIXEDCLASS_ONTOLOGY_MAPPING}</li>
  * <li>Extracts all names from the downloaded ontologies</li>
- * <li>Creates an embedded Neo4j graph database from the extracted names and adds the mappings</li>
- * <li>Export a concept name dictionary and the meta class mapping file from the Neo4j database.</li>
+ * <li>Creates an embedded Neo4j graph database from the extracted names and
+ * adds the mappings</li>
+ * <li>Export a concept name dictionary and the meta class mapping file from the
+ * Neo4j database.</li>
  * </ol>
  * </p>
  * 
@@ -334,16 +336,18 @@ public class SetupService implements ISetupService {
 				}
 			}
 			modules = o.getModules();
-			for (OntologyModule om : modules) {
-				log.debug("Retrieving class IDs of module {}", om.getId());
-				if (om.getOwlOntology() == null)
-					owlParsingService.parse(om);
-				Set<String> mixedClassIdsForModule = metaConceptService.getMixedClassIdsForOntology(om);
-				om.setClassIds(mixedClassIdsForModule);
-				log.debug("Adding classes of module {} to class-ontology mapping", om.getId());
-				addToMixedClassModuleMapping(mixedClassIdsForModule, om, mixedClassToModuleMapping);
-				log.debug("Running constant scorers on module {}", om.getId());
-				constantScoringChain.score(om);
+			if (modules != null) {
+				for (OntologyModule om : modules) {
+					log.debug("Retrieving class IDs of module {}", om.getId());
+					if (om.getOwlOntology() == null)
+						owlParsingService.parse(om);
+					Set<String> mixedClassIdsForModule = metaConceptService.getMixedClassIdsForOntology(om);
+					om.setClassIds(mixedClassIdsForModule);
+					log.debug("Adding classes of module {} to class-ontology mapping", om.getId());
+					addToMixedClassModuleMapping(mixedClassIdsForModule, om, mixedClassToModuleMapping);
+					log.debug("Running constant scorers on module {}", om.getId());
+					constantScoringChain.score(om);
+				}
 			}
 			dbService.storeOntologies(modules, false);
 			stats.successcount++;
