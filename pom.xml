@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.aquadiva</groupId>
 		<artifactId>joyce</artifactId>
-		<version>1.0.1-SNAPSHOT</version>
+		<version>1.0.1</version>
 		<relativePath>..</relativePath>
 	</parent>
 	<artifactId>joyce-processes</artifactId>
