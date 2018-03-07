@@ -295,9 +295,9 @@ public class SetupService implements ISetupService {
 			try {
 				owlParsingService.parse(o);
 				owlParsingService.clearOntologies();
-			} catch (Throwable t) {
+			} catch (IOException e) {
 				o.setHasParsingError(true);
-				throw t;
+				throw e;
 			}
 			o.setHasParsingError(false);
 			log.debug("Retrieving class IDs of ontology {}.", o.getId());
