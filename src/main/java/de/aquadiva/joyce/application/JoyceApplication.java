@@ -217,7 +217,7 @@ public class JoyceApplication {
 				true);
 
 		Properties config = new Properties();
-		config.load(JoyceApplication.class.getResourceAsStream("/configuration.properties.template"));
+		config.load(JoyceApplication.class.getResourceAsStream(File.separator + "configuration.properties.template"));
 		config.setProperty(BIOPORTAL_API_KEY, apikey);
 		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_ONTOLOGIES, String.valueOf(downloadOntologies));
 		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD,
@@ -251,7 +251,6 @@ public class JoyceApplication {
 			dbPath = dbFileMatcher.group(1);
 			int lastPathElementStartIndex = dbPath.lastIndexOf(File.separator);
 			dbDirectory = new File(dbPath.substring(0, lastPathElementStartIndex));
-
 		}
 		if (f.apply(ONTOLOGIES_DOWNLOAD_DIR) || f.apply(ONTOLOGY_INFO_DOWNLOAD_DIR) || f.apply(MAPPINGS_DOWNLOAD_DIR)
 				|| f.apply(ONTOLOGY_CLASSES_NAMES_DIR) || f.apply(NEO4J_PATH) || f.apply(OWL_DIR)
