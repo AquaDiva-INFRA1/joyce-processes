@@ -223,7 +223,7 @@ public class JoyceApplication {
 		config.setProperty(ONTOLOGIES_FOR_DOWNLOAD,
 				ontoDownloadRestriction != null ? Stream.of(ontoDownloadRestriction).collect(Collectors.joining(","))
 						: "");
-		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS, String.valueOf(downloadOntologies));
+		config.setProperty(SETUP_DOWNLOAD_BIOPORTAL_MAPPINGS, String.valueOf(downloadMappings));
 		config.setProperty(MAPPINGS_FOR_DOWNLOAD,
 				mappingsDownloadRestriction != null
 						? Stream.of(mappingsDownloadRestriction).collect(Collectors.joining(","))
