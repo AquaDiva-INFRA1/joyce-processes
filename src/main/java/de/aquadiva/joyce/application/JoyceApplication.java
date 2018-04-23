@@ -249,7 +249,7 @@ public class JoyceApplication {
 		File dbDirectory = null;
 		if (dbFileMatcher.find()) {
 			dbPath = dbFileMatcher.group(1);
-			int lastPathElementStartIndex = dbPath.lastIndexOf('/');
+			int lastPathElementStartIndex = dbPath.lastIndexOf(File.separator);
 			dbDirectory = new File(dbPath.substring(0, lastPathElementStartIndex));
 
 		}
