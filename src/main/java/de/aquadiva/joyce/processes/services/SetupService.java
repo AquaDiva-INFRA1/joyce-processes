@@ -40,6 +40,7 @@ import de.aquadiva.joyce.base.services.IOntologyFormatConversionService;
 import de.aquadiva.joyce.base.services.IOntologyNameExtractionService;
 import de.aquadiva.joyce.base.services.IOntologyRepositoryStatsPrinterService;
 import de.aquadiva.joyce.base.util.JoyceException;
+import de.aquadiva.joyce.base.util.MetaConceptMapCreationException;
 import de.aquadiva.joyce.core.services.IOntologyModularizationService;
 import de.aquadiva.joyce.util.OntologyModularizationException;
 import de.julielab.java.utilities.FileUtilities;
@@ -192,6 +193,23 @@ public class SetupService implements ISetupService {
 		if (errorFile.exists())
 			errorFile.delete();
 
+		prepareForModularization();
+		modularize();
+	}
+
+	@Override
+	public void setupSelectionSystem(boolean premodularization) throws IOException, JoyceException {
+		if (errorFile.exists())
+			errorFile.delete();
+
+		if (premodularization) {
+			prepareForModularization();
+		} else {
+			modularize();
+		}
+	}
+
+	private void prepareForModularization() throws MetaConceptMapCreationException {
 		if (downloadOntologies) {
 			log.info("Downloading ontologies from BioPortal...");
 			downloadService.downloadBioPortalOntologiesToConfigDirs(requestedOntologyAcronyms);
@@ -225,7 +243,11 @@ public class SetupService implements ISetupService {
 		neo4jService.createMetaClassesInDatabase();
 		neo4jService.exportMetaClassToIriMappingFile();
 		neo4jService.exportLingpipeDictionary();
-
+	}
+	
+	private void modularize() throws IOException {
+		List<Ontology> ontologies;
+		ontologies = dbService.getAllOntologies();
 		metaConceptService.loadMetaClassIriMaps();
 
 		// unfortunately, it seems the modularization is not thread safe...
@@ -253,7 +275,6 @@ public class SetupService implements ISetupService {
 		writeConceptGazetteerConfigurationFile(dictPath);
 		log.info(getClass().getSimpleName() + " finished processing.");
 		ontologyRepositoryStatsPrinterService.printOntologyRepositoryStats(new File("ontologyrepositorystats.csv"));
-
 	}
 
 	private void writeConceptGazetteerConfigurationFile(String dictPath) throws IOException {

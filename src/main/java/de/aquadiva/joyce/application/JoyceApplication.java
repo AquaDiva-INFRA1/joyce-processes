@@ -75,13 +75,14 @@ public class JoyceApplication {
 		if (args.length == 0) {
 			System.err.println("Select from the following modes:");
 			System.err.println("-s setup");
+			System.err.println("-m modularize ontologies via SeeCOnt");
 			System.err.println("-e select ontology modules");
 			System.err.println("-p print JOYCE ontology repository statistics");
 			System.exit(1);
 		}
 		long time = System.currentTimeMillis();
 		String mode = args[0];
-		Registry registry = null;
+		Registry registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 		try {
 			switch (mode) {
 			case "-s":
@@ -101,10 +102,16 @@ public class JoyceApplication {
 				} else if (null == configFilePath) {
 					configFilePath = args[1];
 				}
+				if (!(new File(configFilePath).exists())) {
+					log.error("Configuration file {} does not exist.", configFilePath);
+					break;
+				}
 				System.setProperty(JoyceSymbolConstants.JOYCE_CONFIG_FILE, configFilePath);
-				registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 				ISetupService setupService = registry.getService(ISetupService.class);
-				setupService.setupSelectionSystem();
+				setupService.setupSelectionSystem(true);
+				break;
+			case "-m":
+				modularize(args, registry);
 				break;
 			case "-e":
 				if (args.length < 2) {
@@ -113,7 +120,6 @@ public class JoyceApplication {
 					break;
 				}
 				File textInput = new File(args[1]);
-				registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 				IOntologyModuleSelectionService selectionService = registry
 						.getService(IOntologyModuleSelectionService.class);
 				SelectionParameters p = new SelectionParameters();
@@ -168,7 +174,6 @@ public class JoyceApplication {
 				}
 				break;
 			case "-p":
-				registry = RegistryBuilder.buildAndStartupRegistry(JoyceProcessesModule.class);
 				IOntologyRepositoryStatsPrinterService printerService = registry
 						.getService(IOntologyRepositoryStatsPrinterService.class);
 				File file = new File("ontologyrepositorystats.csv");
@@ -185,6 +190,28 @@ public class JoyceApplication {
 		}
 		time = System.currentTimeMillis() - time;
 		log.info("Application finished in {}ms ({}s).", time, time / 1000);
+	}
+
+	private static void modularize(String[] args, Registry registry) throws IOException, JoyceException {
+		String configFilePath = System.getProperty(JoyceSymbolConstants.JOYCE_CONFIG_FILE);
+		if (null == configFilePath && args.length < 2) {
+			File defaultConfigfile = new File("./configuration.properties");
+			if (defaultConfigfile.exists()) {
+				configFilePath = "./configuration.properties";
+				log.info("The default configuration file is used.");
+			} else {
+				System.out.println(
+					"No configuration file was specified and the default configuration file\n"
+					+ "(./configuration.properties) doesn't exist. Please configure JOYCE\n"
+					+ "before proceeding.");
+				return;
+			}
+		} else if (null == configFilePath) {
+			configFilePath = args[1];
+		}
+		System.setProperty(JoyceSymbolConstants.JOYCE_CONFIG_FILE, configFilePath);
+		ISetupService setupService = registry.getService(ISetupService.class);
+		setupService.setupSelectionSystem(false);
 	}
 
 	private static String doInteractiveConfiguration() throws IOException {

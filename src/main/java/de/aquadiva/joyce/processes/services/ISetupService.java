@@ -16,4 +16,6 @@ public interface ISetupService {
 	 * @throws JoyceException 
 	 */
 	void setupSelectionSystem() throws IOException, JoyceException;
+
+	void setupSelectionSystem(boolean premodularization) throws IOException, JoyceException;
 }
