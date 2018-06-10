@@ -14,14 +14,10 @@ import org.apache.commons.io.LineIterator;
 import org.apache.tapestry5.ioc.annotations.Symbol;
 import org.slf4j.Logger;
 
-import cern.colt.Arrays;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multiset;
 
 import de.aquadiva.joyce.JoyceSymbolConstants;
-import de.aquadiva.joyce.core.services.IConceptTaggingService;
 
 public class TermDiversityMeasurementService implements
 		ITermDiversityMeasurementService {

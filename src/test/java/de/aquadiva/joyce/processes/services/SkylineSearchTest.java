@@ -8,7 +8,6 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.aquadiva.joyce.base.data.IOntologySet;
 import de.aquadiva.joyce.base.data.OntologySet;
 import de.aquadiva.joyce.base.data.ScoreType;
 import de.aquadiva.joyce.processes.services.SkylineSearch;
