@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import de.aquadiva.joyce.base.data.IOntologySet;
 import de.aquadiva.joyce.base.data.OntologySet;
 import de.aquadiva.joyce.base.data.ScoreType;
 
