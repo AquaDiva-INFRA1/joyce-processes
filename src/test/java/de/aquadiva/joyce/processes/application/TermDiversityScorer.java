@@ -68,6 +68,7 @@ public class TermDiversityScorer {
 			}
 				
 		}
+		writer.close();
 		Registry registry = null;
 		try {
 			registry = RegistryBuilder
