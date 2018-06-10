@@ -526,7 +526,7 @@ public class OntologyModuleSelectionService implements IOntologyModuleSelectionS
 
 			// for each type, divide the scores into subspaces
 			// get the subspace borders
-			ArrayList<double[]> subspaceBorders = getSubspaceBorders((List) nonSkylineOntologiesSets,
+			ArrayList<double[]> subspaceBorders = getSubspaceBorders(nonSkylineOntologiesSets,
 					params.scoreTypesToConsider, scoresByType);
 
 			// create the subspace matrix and fill it with the candidate ontologies
