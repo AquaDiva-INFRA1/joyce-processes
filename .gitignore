@@ -12,3 +12,4 @@ selection_*.txt
 *.log
 /configuration.properties
 /selectionresult/
+dependency-reduced-pom.xml
